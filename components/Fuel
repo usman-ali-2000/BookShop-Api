@@ -1,0 +1,16 @@
+const mongoose = require("mongoose");
+
+const fuelSchema = new mongoose.Schema({
+    email:{
+      type: String,
+    },
+    fuelAmount:{
+        type: String,
+    },
+    date:{
+      type: String,
+    }
+  });
+
+const uploadFuel = new mongoose.model('uploadFuel', fuelSchema);
+module.exports = uploadFuel;
