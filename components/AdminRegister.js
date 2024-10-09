@@ -24,3 +24,4 @@ const AdminRegister = mongoose.model('adminSchema', adminSchema);
 
 // Export the model
 module.exports = AdminRegister;
+

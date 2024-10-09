@@ -17,18 +17,61 @@ const FinancialSeason = require('./FinancialSeason');
 const Fuel = require('./Fuel');
 const AdminRegister = require('./AdminRegister');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
+const { Cart } = require('./Cart');
 
-
-
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 app.use(express.json());
-app.use(cors());
+const corsOptions = {
+  origin: '*', // Replace with your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+  credentials: true // Allow cookies if needed
+};
+
+app.use(cors(corsOptions));
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API...' })
 })
+
+
+app.post('/cart', async (req, res) => {
+  try {
+    const { email, items } = req.body; // Assume body contains email and items array
+
+    // Create a new Cart entry
+    const newCart = new Cart({
+      email,
+      items
+    });
+
+    // Save the cart to the database
+    await newCart.save();
+
+    res.status(201).json({ success: true, message: 'Cart created successfully', cart: newCart });
+  } catch (error) {
+    console.error('Error creating cart:', error);
+    res.status(500).json({ success: false, message: 'Error creating cart', error });
+  }
+});
+
+
+app.get('/cart', async (req, res) => {
+  try {
+    // Find the cart for the user by email
+    const cart = await Cart.find();
+
+    if (!cart) {
+      return res.status(404).json({ success: false, message: 'Cart not found' });
+    }
+
+    res.status(200).json({ success: true, cart });
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    res.status(500).json({ success: false, message: 'Error fetching cart', error });
+  }
+});
 
 app.post("/register", async (req, res) => {
   try {
@@ -378,13 +421,19 @@ app.get('/category/:email', async (req, res) => {
 // POST create category
 app.post('/category', async (req, res) => {
   try {
-    const { email, category, date } = req.body;
-    const newCategory = new Category({ email, category, date });
+    const { imageUrl, category } = req.body;
+
+    // Check if category or imageUrl is missing
+    if (!category || !imageUrl) {
+      return res.status(400).json({ error: 'Category and image URL are required.' });
+    }
+
+    const newCategory = new Category({ imageUrl, category });
     await newCategory.save();
     res.status(201).json(newCategory);
   } catch (error) {
-    console.error('Error creating category', error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error creating category:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
 
@@ -494,8 +543,8 @@ app.get('/productcreate', async (req, res) => {
 // POST create product
 app.post('/productcreate', async (req, res) => {
   try {
-    const { email, category, product, date } = req.body;
-    const newProduct = new ProductCreate({ email, category, product, date });
+    const { imageUrl, category, product, price } = req.body;
+    const newProduct = new ProductCreate({imageUrl, category, product, price });
     await newProduct.save();
     res.status(201).json(newProduct);
   } catch (error) {
