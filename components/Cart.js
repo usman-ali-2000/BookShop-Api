@@ -30,6 +30,10 @@ const cartSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  status: {
+    type: String,
+    default: 'pending', 
+  },
   timestamp: { 
     type: Date, 
     default: Date.now 

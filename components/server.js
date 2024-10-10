@@ -38,11 +38,12 @@ app.get('/', (request, response) => {
 
 app.post('/cart', async (req, res) => {
   try {
-    const { email, items } = req.body; // Assume body contains email and items array
+    const { email, status, items } = req.body; // Assume body contains email and items array
 
     // Create a new Cart entry
     const newCart = new Cart({
       email,
+      status,
       items
     });
 
@@ -53,6 +54,34 @@ app.post('/cart', async (req, res) => {
   } catch (error) {
     console.error('Error creating cart:', error);
     res.status(500).json({ success: false, message: 'Error creating cart', error });
+  }
+});
+
+app.patch('/cart/:id', async (req, res) => {
+  try {
+    const { id } = req.params;  // Get cart ID from URL
+    const { status, items } = req.body;  // Get new status and items from the body
+
+    // Find the cart by ID and update the fields
+    const updatedCart = await Cart.findByIdAndUpdate(
+      id, 
+      { $set: { status, items } },  // Update status and items
+      { new: true, runValidators: true }  // Ensure the updated document is returned and validators are run
+    );
+
+    // Check if the cart was found and updated
+    if (!updatedCart) {
+      return res.status(404).json({ success: false, message: 'Cart not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Cart updated successfully',
+      cart: updatedCart
+    });
+  } catch (error) {
+    console.error('Error updating cart:', error);
+    res.status(500).json({ success: false, message: 'Error updating cart', error });
   }
 });
 
