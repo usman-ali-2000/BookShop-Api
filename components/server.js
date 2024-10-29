@@ -18,6 +18,8 @@ const Fuel = require('./Fuel');
 const AdminRegister = require('./AdminRegister');
 const cors = require('cors');
 const { Cart } = require('./Cart');
+const nodemailer = require('nodemailer');
+const bcrypt = require('bcryptjs');
 
 const PORT = process.env.PORT || 8000;
 
@@ -30,6 +32,97 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+
+async function generateUniqueId() {
+  const date = new Date();
+  // Format date as YYMMDD
+  const dateString = date.toISOString().slice(2, 10).replace(/-/g, '');
+
+  // Get the count of users created today
+  const startOfDay = new Date(date.setHours(0, 0, 0, 0)); // start of today
+  const endOfDay = new Date(date.setHours(23, 59, 59, 999)); // end of today
+  const count = await AdminRegister.countDocuments({
+    createdAt: { $gte: startOfDay, $lt: endOfDay },
+  });
+
+  // Increment the count by 1 to get the current user's position for today
+  const userCountToday = count + 1;
+
+  // Base unique ID without random suffix
+  let uniqueId = `${dateString}${userCountToday}`;
+
+  // Check if this ID already exists in the database
+  let existingUser = await AdminRegister.findOne({ generatedId: uniqueId });
+
+  // Keep track of attempts to prevent infinite loop
+  let maxAttempts = 10;
+  let attempts = 0;
+
+  // Loop until a unique ID is found or max attempts are reached
+  while (existingUser && attempts < maxAttempts) {
+    attempts++;
+    maxAttempts++;
+    const randomSuffix = Math.floor(Math.random() * 1000); // Random number between 0 and 999
+    uniqueId = `${dateString}${userCountToday}${randomSuffix}`;
+    existingUser = await AdminRegister.findOne({ generatedId: uniqueId });
+  }
+
+  // If max attempts reached without a unique ID, handle accordingly
+  if (attempts === maxAttempts) {
+    throw new Error("Could not generate a unique ID after multiple attempts");
+  }
+
+  return uniqueId;
+}
+
+
+
+
+
+
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 9000); // 6-digit OTP
+};
+
+
+// Create a POST route to send OTP
+app.post('/send-otp', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  const otp = generateOTP(); // Generate a 6-digit OTP
+
+  // Configure the Nodemailer transporter
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+
+      user: 'usmanzulfiqar14@gmail.com',
+      pass: 'jqbb ogef ujmn cetn',
+    },
+  });
+
+  // Email options
+  const mailOptions = {
+    from: 'usmanzulfiqar14@gmail.com',
+    to: email,
+    subject: 'Your OTP Code',
+    text: `Your OTP code is ${otp}`,
+  };
+
+  try {
+    // Send email
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'OTP sent successfully', otp }); // You might want to store OTP in the database or session
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending email', error });
+  }
+});
+
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API...' })
@@ -64,7 +157,7 @@ app.patch('/cart/:id', async (req, res) => {
 
     // Find the cart by ID and update the fields
     const updatedCart = await Cart.findByIdAndUpdate(
-      id, 
+      id,
       { $set: { status, items } },  // Update status and items
       { new: true, runValidators: true }  // Ensure the updated document is returned and validators are run
     );
@@ -104,36 +197,49 @@ app.get('/cart', async (req, res) => {
 
 app.post("/register", async (req, res) => {
   try {
-      console.log('Received request body:', req.body);
-      const { email, name, phone, password } = req.body;
+    console.log('Received request body:', req.body);
+    const { email, name, phone, userId, password } = req.body;
 
-      // Validation: Ensure all required fields are provided
-      if (!name || !phone || !email || !password) {
-          return res.status(400).json({ msg: 'All fields are mandatory' });
-      }
+    // Validation: Ensure all required fields are provided
 
-      // Check if email already exists
-      const existingUser = await AdminRegister.findOne({ email });
-      if (existingUser) {
-          return res.status(400).json({ msg: 'Email already exists' });
-      }
+    if (!name || !phone || !email || !password) {
+      return res.status(400).json({ msg: 'All fields are mandatory' });
+    }
 
-      // Create a new user and save to the database
-      const user = new AdminRegister(req.body);
-      await user.save();
+    // Check if email already exists
+    const existingUser = await AdminRegister.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ msg: 'Email already exists' });
+    }
 
-      res.status(201).json({
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-      });
+    const generatedId = await generateUniqueId();
+    // Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      console.log('User registered successfully:', user);
+    // Create a new user and save to the database
+    const user = new AdminRegister({
+      name,
+      phone,
+      email,
+      generatedId: generatedId.toString(),
+      userId,    
+      password: hashedPassword,
+    });
+    await user.save();
+
+    res.status(201).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    });
+
+    console.log('User registered successfully:', user);
 
   } catch (e) {
-      console.error('Error during registration:', e);
-      res.status(500).json({ msg: 'Server error. Please try again later.' });
+    console.error('Error during registration:', e);
+    res.status(500).json({ msg: 'Server error. Please try again later.' });
   }
 });
 
@@ -148,7 +254,7 @@ app.post("/login", async (req, res) => {
     }
 
     const user = await AdminRegister.findOne({ email });
-    const isMatch = await password === user.password;
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({ msg: 'Invalid credentials' });
@@ -573,7 +679,7 @@ app.get('/productcreate', async (req, res) => {
 app.post('/productcreate', async (req, res) => {
   try {
     const { imageUrl, category, product, price } = req.body;
-    const newProduct = new ProductCreate({imageUrl, category, product, price });
+    const newProduct = new ProductCreate({ imageUrl, category, product, price });
     await newProduct.save();
     res.status(201).json(newProduct);
   } catch (error) {

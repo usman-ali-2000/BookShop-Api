@@ -10,6 +10,12 @@ const adminSchema = new mongoose.Schema({
     email: {
         type: String,
     },
+    generatedId: {
+        type: String,
+    },
+    userId: {
+        type: String,
+    },
     password: {
         type: String,
     },
