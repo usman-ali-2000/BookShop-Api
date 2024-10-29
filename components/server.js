@@ -216,6 +216,7 @@ app.post("/register", async (req, res) => {
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+  
 
     // Create a new user and save to the database
     const user = new AdminRegister({
