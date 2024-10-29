@@ -93,10 +93,11 @@ app.post('/send-otp', async (req, res) => {
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
-  const existingUser = await AdminRegister.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ msg: 'Email already exists' });
-    }
+  
+  // const existingUser = await AdminRegister.findOne({ email });
+  //   if (existingUser) {
+  //     return res.status(400).json({ msg: 'Email already exists' });
+  //   }
 
   const otp = generateOTP(); // Generate a 6-digit OTP
 
