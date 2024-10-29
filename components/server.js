@@ -199,6 +199,34 @@ app.get('/cart', async (req, res) => {
   }
 });
 
+
+//update Register
+app.patch("/register/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    let updateData = req.body;
+
+    // If password is being updated, hash it
+    if (updateData.password) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(updateData.password, saltRounds);
+      updateData.password = hashedPassword;
+    }
+
+    const updatedUser = await AdminRegister.findOneAndUpdate({ email }, updateData, {
+      new: true,
+    });
+
+    if (!updatedUser) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    res.send(updatedUser);
+  } catch (e) {
+    res.status(400).send({ message: "Error updating user", error: e });
+  }
+});
+
 app.post("/register", async (req, res) => {
   try {
     console.log('Received request body:', req.body);
@@ -302,6 +330,7 @@ app.patch("/login/:id", async (req, res) => {
   }
 });
 
+
 app.get('/register', async (req, res) => {
   try {
     const admin = await AdminRegister.find();
@@ -348,6 +377,7 @@ app.post('/farm', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
 //update Farm
 app.patch("/farm/:id", async (req, res) => {
   try {
