@@ -230,7 +230,7 @@ app.patch("/register/:email", async (req, res) => {
 
 // PATCH route to add coins to an admin's existing coin balance
 app.patch('/register/:id/add-coins', async (req, res) => {
-  const adminId = req.params.id;
+  const _id = req.params.id;
   const { additionalCoins } = req.body;
 
   if (typeof additionalCoins !== 'number') {
@@ -239,7 +239,7 @@ app.patch('/register/:id/add-coins', async (req, res) => {
 
   try {
       const result = await AdminRegister.findByIdAndUpdate(
-          adminId,
+          _id,
           { $inc: { coin: additionalCoins } }, // Increment the coin field
           { new: true } // Return the updated document
       );
@@ -256,8 +256,8 @@ app.patch('/register/:id/add-coins', async (req, res) => {
 });
 
 // PATCH route to add coins to an referCoins existing coin balance
-app.patch('/register/:id/refer-coins', async (req, res) => {
-  const adminId = req.params.id;
+app.patch('/register/generated/:generatedId/refer-coins', async (req, res) => {
+  const { generatedId } = req.params;
   const { referCoins } = req.body;
 
   if (typeof referCoins !== 'number') {
@@ -265,20 +265,20 @@ app.patch('/register/:id/refer-coins', async (req, res) => {
   }
 
   try {
-      const result = await AdminRegister.findByIdAndUpdate(
-          adminId,
-          { $inc: { referCoin: referCoins } }, // Increment the coin field
+      const result = await AdminRegister.findOneAndUpdate(
+          { generatedId: generatedId }, // Find by custom `generatedId` field
+          { $inc: { referCoin: referCoins } }, // Increment the referCoin field
           { new: true } // Return the updated document
       );
 
       if (result) {
-          res.json({ message: 'Coins added successfully', updatedAdmin: result });
+          res.json({ message: 'Refer coins added successfully', updatedAdmin: result });
       } else {
-          res.status(404).json({ error: 'Admin with the given ID not found' });
+          res.status(404).json({ error: 'Admin with the given generated ID not found' });
       }
   } catch (error) {
-      console.error("Error adding coins:", error);
-      res.status(500).json({ error: 'An error occurred while adding coins' });
+      console.error("Error adding refer coins:", error);
+      res.status(500).json({ error: 'An error occurred while adding refer coins' });
   }
 });
 
