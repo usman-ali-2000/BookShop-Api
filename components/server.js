@@ -63,7 +63,7 @@ async function generateUniqueId() {
   while (existingUser && attempts < maxAttempts) {
     attempts++;
     maxAttempts++;
-    const randomSuffix = Math.floor(Math.random() * 1000); // Random number between 0 and 999
+    const randomSuffix = Math.floor(Math.random() * 10000); // Random number between 0 and 999
     uniqueId = `${dateString}${userCountToday}${randomSuffix}`;
     existingUser = await AdminRegister.findOne({ generatedId: uniqueId });
   }
@@ -227,6 +227,61 @@ app.patch("/register/:email", async (req, res) => {
     res.status(400).send({ message: "Error updating user", error: e });
   }
 });
+
+// PATCH route to add coins to an admin's existing coin balance
+app.patch('/register/:id/add-coins', async (req, res) => {
+  const adminId = req.params.id;
+  const { additionalCoins } = req.body;
+
+  if (typeof additionalCoins !== 'number') {
+      return res.status(400).json({ error: 'additionalCoins must be a number' });
+  }
+
+  try {
+      const result = await AdminRegister.findByIdAndUpdate(
+          adminId,
+          { $inc: { coin: additionalCoins } }, // Increment the coin field
+          { new: true } // Return the updated document
+      );
+
+      if (result) {
+          res.json({ message: 'Coins added successfully', updatedAdmin: result });
+      } else {
+          res.status(404).json({ error: 'Admin with the given ID not found' });
+      }
+  } catch (error) {
+      console.error("Error adding coins:", error);
+      res.status(500).json({ error: 'An error occurred while adding coins' });
+  }
+});
+
+// PATCH route to add coins to an referCoins existing coin balance
+app.patch('/register/:id/refer-coins', async (req, res) => {
+  const adminId = req.params.id;
+  const { referCoins } = req.body;
+
+  if (typeof referCoins !== 'number') {
+      return res.status(400).json({ error: 'referCoins must be a number' });
+  }
+
+  try {
+      const result = await AdminRegister.findByIdAndUpdate(
+          adminId,
+          { $inc: { referCoin: referCoins } }, // Increment the coin field
+          { new: true } // Return the updated document
+      );
+
+      if (result) {
+          res.json({ message: 'Coins added successfully', updatedAdmin: result });
+      } else {
+          res.status(404).json({ error: 'Admin with the given ID not found' });
+      }
+  } catch (error) {
+      console.error("Error adding coins:", error);
+      res.status(500).json({ error: 'An error occurred while adding coins' });
+  }
+});
+
 
 app.post("/register", async (req, res) => {
   try {

@@ -22,6 +22,14 @@ const adminSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now
+    },
+    coin: {
+        type: Number,
+        default: 0
+    },
+    referCoin: {
+        type: Number,
+        default: 0
     }
 });
 
