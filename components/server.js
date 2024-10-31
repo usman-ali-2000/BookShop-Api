@@ -348,7 +348,7 @@ app.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ msg: 'Invalid credentials' });
     }
-    res.json({ user: { id: user._id, name: user.name, email: user.email } });
+    res.json({ user: { id: user._id, name: user.name, email: user.email, userId: user.userId, generatedId: user.generatedId } });
   } catch (e) {
     res.status(400).send(e);
   }
