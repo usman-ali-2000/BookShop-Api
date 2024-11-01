@@ -36,7 +36,7 @@ const adminSchema = new mongoose.Schema({
         default: 0
     },
     date: {
-        type: Number,
+        type: String,
     }
 });
 
