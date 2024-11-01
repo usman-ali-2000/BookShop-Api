@@ -200,6 +200,16 @@ app.get('/cart', async (req, res) => {
   }
 });
 
+app.get('/register/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = await AdminRegister.findById(id);
+    res.json(adminId);
+  } catch (error) {
+    console.error('Error fetching farm', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 //update Register
 app.patch("/register/:email", async (req, res) => {
@@ -208,6 +218,7 @@ app.patch("/register/:email", async (req, res) => {
     let updateData = req.body;
 
     // If password is being updated, hash it
+    
     if (updateData.password) {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(updateData.password, saltRounds);
@@ -241,6 +252,35 @@ app.patch('/register/:id/add-coins', async (req, res) => {
       const result = await AdminRegister.findByIdAndUpdate(
           _id,
           { $inc: { coin: additionalCoins } }, // Increment the coin field
+          { new: true } // Return the updated document
+      );
+
+      if (result) {
+          res.json({ message: 'Coins added successfully', updatedAdmin: result });
+      } else {
+          res.status(404).json({ error: 'Admin with the given ID not found' });
+      }
+  } catch (error) {
+      console.error("Error adding coins:", error);
+      res.status(500).json({ error: 'An error occurred while adding coins' });
+  }
+});
+
+app.patch('/attempts/:id', async (req, res) => {
+
+  const _id = req.params.id;
+  const { attempt } = req.body;
+  const { date } = req.body;
+
+  if (typeof attempt !== 'number') {
+      return res.status(400).json({ error: 'additionalCoins must be a number' });
+  }
+
+  try {
+      const result = await AdminRegister.findByIdAndUpdate(
+          _id,
+          { attempts: attempt }, // Increment the attempt field
+          { date: date }, 
           { new: true } // Return the updated document
       );
 

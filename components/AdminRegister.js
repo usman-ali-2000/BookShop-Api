@@ -30,6 +30,13 @@ const adminSchema = new mongoose.Schema({
     referCoin: {
         type: Number,
         default: 0
+    },
+    attempts: {
+        type: Number,
+        default: 0
+    },
+    date: {
+        type: String,
     }
 });
 
