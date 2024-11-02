@@ -218,7 +218,7 @@ app.patch("/register/:email", async (req, res) => {
     let updateData = req.body;
 
     // If password is being updated, hash it
-    
+
     if (updateData.password) {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(updateData.password, saltRounds);
@@ -269,8 +269,7 @@ app.patch('/register/:id/add-coins', async (req, res) => {
 app.patch('/attempts/:id', async (req, res) => {
 
   const _id = req.params.id;
-  const { attempt } = req.body;
-  const { date } = req.body;
+  const { attempt, date } = req.body;
 
   if (typeof attempt !== 'number') {
       return res.status(400).json({ error: 'additionalCoins must be a number' });
@@ -279,8 +278,7 @@ app.patch('/attempts/:id', async (req, res) => {
   try {
       const result = await AdminRegister.findByIdAndUpdate(
           _id,
-          { attempts: attempt }, // Increment the attempt field
-          { date: date }, 
+          { attempts: attempt, date: date }, 
           { new: true } // Return the updated document
       );
 
