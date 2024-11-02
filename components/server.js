@@ -20,6 +20,7 @@ const cors = require('cors');
 const { Cart } = require('./Cart');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
+const Task = require('./Task');
 
 const PORT = process.env.PORT || 8000;
 
@@ -93,7 +94,7 @@ app.post('/send-otp', async (req, res) => {
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
-  
+
   // const existingUser = await AdminRegister.findOne({ email });
   //   if (existingUser) {
   //     return res.status(400).json({ msg: 'Email already exists' });
@@ -200,6 +201,70 @@ app.get('/cart', async (req, res) => {
   }
 });
 
+// GET: Retrieve all tasks in reverse order
+app.get('/tasks', async (req, res) => {
+  try {
+    const tasks = await Task.find().sort({ createdAt: -1 }); // Sort by createdAt in descending order
+    res.status(200).json({ tasks });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve tasks' });
+  }
+});
+
+
+app.post('/task', async (req, res) => {
+  const { link } = req.body;
+
+  try {
+    const newPost = new Task({
+      link,
+      views: [],
+      createdAt: Date.now(),
+    });
+
+    const savedPost = await newPost.save();
+    res.status(201).json({ message: 'Post created successfully', post: savedPost });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create post' });
+  }
+});
+
+app.get('/task/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Find tasks where the userId is in the views array
+    const tasks = await Task.find({ views: { $in: [userId] } });
+    res.status(200).json({ tasks });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve tasks' });
+  }
+});
+
+app.put('/task/:postId', async (req, res) => {
+  const { postId } = req.params;
+  const { userId } = req.body;
+  // const { title, content } = req.body;
+
+  try {
+    const post = await Task.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    if (!post.views.includes(userId)) {
+      post.views.push(userId);
+    }
+
+    const updatedPost = await post.save();
+    res.status(200).json({ message: 'Post updated successfully', post: updatedPost });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update post' });
+  }
+});
+
+
 app.get('/register/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -245,24 +310,24 @@ app.patch('/register/:id/add-coins', async (req, res) => {
   const { additionalCoins } = req.body;
 
   if (typeof additionalCoins !== 'number') {
-      return res.status(400).json({ error: 'additionalCoins must be a number' });
+    return res.status(400).json({ error: 'additionalCoins must be a number' });
   }
 
   try {
-      const result = await AdminRegister.findByIdAndUpdate(
-          _id,
-          { $inc: { coin: additionalCoins } }, // Increment the coin field
-          { new: true } // Return the updated document
-      );
+    const result = await AdminRegister.findByIdAndUpdate(
+      _id,
+      { $inc: { coin: additionalCoins } }, // Increment the coin field
+      { new: true } // Return the updated document
+    );
 
-      if (result) {
-          res.json({ message: 'Coins added successfully', updatedAdmin: result });
-      } else {
-          res.status(404).json({ error: 'Admin with the given ID not found' });
-      }
+    if (result) {
+      res.json({ message: 'Coins added successfully', updatedAdmin: result });
+    } else {
+      res.status(404).json({ error: 'Admin with the given ID not found' });
+    }
   } catch (error) {
-      console.error("Error adding coins:", error);
-      res.status(500).json({ error: 'An error occurred while adding coins' });
+    console.error("Error adding coins:", error);
+    res.status(500).json({ error: 'An error occurred while adding coins' });
   }
 });
 
@@ -272,24 +337,24 @@ app.patch('/attempts/:id', async (req, res) => {
   const { attempt, date } = req.body;
 
   if (typeof attempt !== 'number') {
-      return res.status(400).json({ error: 'additionalCoins must be a number' });
+    return res.status(400).json({ error: 'additionalCoins must be a number' });
   }
 
   try {
-      const result = await AdminRegister.findByIdAndUpdate(
-          _id,
-          { attempts: attempt, date: date }, 
-          { new: true } // Return the updated document
-      );
+    const result = await AdminRegister.findByIdAndUpdate(
+      _id,
+      { attempts: attempt, date: date },
+      { new: true } // Return the updated document
+    );
 
-      if (result) {
-          res.json({ message: 'Coins added successfully', updatedAdmin: result });
-      } else {
-          res.status(404).json({ error: 'Admin with the given ID not found' });
-      }
+    if (result) {
+      res.json({ message: 'Coins added successfully', updatedAdmin: result });
+    } else {
+      res.status(404).json({ error: 'Admin with the given ID not found' });
+    }
   } catch (error) {
-      console.error("Error adding coins:", error);
-      res.status(500).json({ error: 'An error occurred while adding coins' });
+    console.error("Error adding coins:", error);
+    res.status(500).json({ error: 'An error occurred while adding coins' });
   }
 });
 
@@ -299,24 +364,24 @@ app.patch('/register/generated/:generatedId/refer-coins', async (req, res) => {
   const { referCoins } = req.body;
 
   if (typeof referCoins !== 'number') {
-      return res.status(400).json({ error: 'referCoins must be a number' });
+    return res.status(400).json({ error: 'referCoins must be a number' });
   }
 
   try {
-      const result = await AdminRegister.findOneAndUpdate(
-          { generatedId: generatedId }, // Find by custom `generatedId` field
-          { $inc: { referCoin: referCoins } }, // Increment the referCoin field
-          { new: true } // Return the updated document
-      );
+    const result = await AdminRegister.findOneAndUpdate(
+      { generatedId: generatedId }, // Find by custom `generatedId` field
+      { $inc: { referCoin: referCoins } }, // Increment the referCoin field
+      { new: true } // Return the updated document
+    );
 
-      if (result) {
-          res.json({ message: 'Refer coins added successfully', updatedAdmin: result });
-      } else {
-          res.status(404).json({ error: 'Admin with the given generated ID not found' });
-      }
+    if (result) {
+      res.json({ message: 'Refer coins added successfully', updatedAdmin: result });
+    } else {
+      res.status(404).json({ error: 'Admin with the given generated ID not found' });
+    }
   } catch (error) {
-      console.error("Error adding refer coins:", error);
-      res.status(500).json({ error: 'An error occurred while adding refer coins' });
+    console.error("Error adding refer coins:", error);
+    res.status(500).json({ error: 'An error occurred while adding refer coins' });
   }
 });
 
@@ -342,7 +407,7 @@ app.post("/register", async (req, res) => {
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-  
+
 
     // Create a new user and save to the database
     const user = new AdminRegister({
@@ -350,7 +415,7 @@ app.post("/register", async (req, res) => {
       phone,
       email,
       generatedId: generatedId.toString(),
-      userId,    
+      userId,
       password: hashedPassword,
     });
     await user.save();
