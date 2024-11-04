@@ -2,6 +2,14 @@
 const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
+    heading: {
+        type: String,
+        required: true
+    },
+    subHeading: {
+        type: String,
+        required: true
+    },
     link: {
         type: String,
         required: true

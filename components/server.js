@@ -217,6 +217,8 @@ app.post('/task', async (req, res) => {
 
   try {
     const newPost = new Task({
+      heading,
+      subHeading,
       link,
       views: [],
       createdAt: Date.now(),
