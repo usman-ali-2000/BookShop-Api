@@ -233,13 +233,22 @@ app.get('/task/:userId', async (req, res) => {
   const { userId } = req.params;
 
   try {
-    // Find tasks where the userId is in the views array
-    const tasks = await Task.find({ views: { $in: [userId] } });
-    res.status(200).json({ tasks });
+    // Fetch all tasks
+    const tasks = await Task.find();
+
+    // Separate tasks into viewed and not viewed based on whether the user's ID is in the views array
+    const viewedTasks = tasks.filter(task => task.views.includes(userId));
+    const notViewedTasks = tasks.filter(task => !task.views.includes(userId));
+
+    res.status(200).json({
+      viewedTasks,
+      notViewedTasks,
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve tasks' });
   }
 });
+
 
 app.put('/task/:postId', async (req, res) => {
   const { postId } = req.params;
