@@ -251,6 +251,23 @@ app.get('/task/:userId', async (req, res) => {
   }
 });
 
+app.delete("/task/:id", async (req, res) => {
+  try {
+
+    const userTask = await Task.findByIdAndDelete(req.params.id);
+
+    if (!userTask) {
+      return res.status(404).send("Data not found");
+    }
+
+    if (!req.params.id) {
+      res.status(201).send();
+    }
+  } catch (e) {
+    res.status(400).send(e);
+  }
+})
+
 
 app.put('/task/:postId', async (req, res) => {
   const { postId } = req.params;
