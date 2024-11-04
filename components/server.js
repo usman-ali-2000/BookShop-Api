@@ -213,7 +213,7 @@ app.get('/tasks', async (req, res) => {
 
 
 app.post('/task', async (req, res) => {
-  const { link } = req.body;
+  const { link, heading, subHeading } = req.body;
 
   try {
     const newPost = new Task({
