@@ -21,6 +21,7 @@ const { Cart } = require('./Cart');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const Task = require('./Task');
+const Asset = require('./Asset');
 
 const PORT = process.env.PORT || 8000;
 
@@ -200,6 +201,103 @@ app.get('/cart', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error fetching cart', error });
   }
 });
+
+
+app.get('/tasks', async (req, res) => {
+  try {
+    const tasks = await Task.find().sort({ createdAt: -1 }); // Sort by createdAt in descending order
+    res.status(200).json({ tasks });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve tasks' });
+  }
+});
+
+
+app.post('/asset', async (req, res) => {
+  const { heading, appIcon, ad, facebook, whatsapp, instagram, twitter, tiktok, youtube, telegram, discord, } = req.body;
+
+  try {
+    const newPost = new Asset({
+      heading,
+      appIcon,
+      ad,
+      facebook,
+      whatsapp,
+      instagram,
+      twitter,
+      tiktok,
+      youtube,
+      telegram,
+      discord,
+    });
+
+    const savedPost = await newPost.save();
+    res.status(201).json({ message: 'Post created successfully', post: savedPost });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create post' });
+  }
+});
+
+// app.get('/task/:userId', async (req, res) => {
+//   const { userId } = req.params;
+
+//   try {
+//     // Fetch all tasks
+//     const tasks = await Task.find();
+
+//     // Separate tasks into viewed and not viewed based on whether the user's ID is in the views array
+//     const viewedTasks = tasks.filter(task => task.views.includes(userId));
+//     const notViewedTasks = tasks.filter(task => !task.views.includes(userId));
+
+//     res.status(200).json({
+//       viewedTasks,
+//       notViewedTasks,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Failed to retrieve tasks' });
+//   }
+// });
+
+app.delete("/asset/:id", async (req, res) => {
+  try {
+
+    const userTask = await Asset.findByIdAndDelete(req.params.id);
+
+    if (!userTask) {
+      return res.status(404).send("Data not found");
+    }
+
+    if (!req.params.id) {
+      res.status(201).send();
+    }
+  } catch (e) {
+    res.status(400).send(e);
+  }
+})
+
+
+app.patch('/asset/:id', async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+
+  try {
+    const updatedAsset = await Asset.findByIdAndUpdate(
+      id,
+      { $set: updateData }, // Only update the fields provided in req.body
+      { new: true, runValidators: true } // Return the updated document
+    );
+
+    if (!updatedAsset) {
+      return res.status(404).json({ error: 'Asset not found' });
+    }
+
+    res.status(200).json({ message: 'Asset updated successfully', asset: updatedAsset });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update asset' });
+  }
+});
+
+
 
 // GET: Retrieve all tasks in reverse order
 app.get('/tasks', async (req, res) => {
