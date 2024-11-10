@@ -203,7 +203,7 @@ app.get('/cart', async (req, res) => {
 });
 
 
-app.get('/tasks', async (req, res) => {
+app.get('/asset', async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 }); // Sort by createdAt in descending order
     res.status(200).json({ tasks });
