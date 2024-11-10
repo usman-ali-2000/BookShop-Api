@@ -205,8 +205,8 @@ app.get('/cart', async (req, res) => {
 
 app.get('/asset', async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 }); // Sort by createdAt in descending order
-    res.status(200).json({ tasks });
+    const assets = await Asset.find(); // Sort by createdAt in descending order
+    res.status(200).json({ assets });
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve tasks' });
   }
