@@ -22,6 +22,7 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 const Task = require('./Task');
 const Asset = require('./Asset');
+const Banner = require('./Banner');
 
 const PORT = process.env.PORT || 8000;
 
@@ -202,6 +203,48 @@ app.get('/cart', async (req, res) => {
   }
 });
 
+
+app.get('/banner', async (req, res) => {
+  try {
+    const banners = await Banner.find(); // Sort by createdAt in descending order
+    res.status(200).json({ banners });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve tasks' });
+  }
+});
+
+app.post('/banner', async (req, res) => {
+  const { banner} = req.body;
+
+  try {
+    const newBanner = new Banner({
+      banner
+    });
+
+    const saveBanner = await newBanner.save();
+    res.status(201).json({ message: 'Post created successfully', post: saveBanner });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create post' });
+  }
+});
+
+
+app.delete("/banner/:id", async (req, res) => {
+  try {
+
+    const bannerDel = await Banner.findByIdAndDelete(req.params.id);
+
+    if (!bannerDel) {
+      return res.status(404).send("Data not found");
+    }
+
+    if (!req.params.id) {
+      res.status(201).send();
+    }
+  } catch (e) {
+    res.status(400).send(e);
+  }
+})
 
 app.get('/asset', async (req, res) => {
   try {
