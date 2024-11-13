@@ -109,14 +109,14 @@ app.post('/send-otp', async (req, res) => {
     service: 'gmail',
     auth: {
 
-      user: 'usmanzulfiqar14@gmail.com',
-      pass: 'jqbb ogef ujmn cetn',
+      user: 'wingedxnetwork@gmail.com',
+      pass: 'ypfr himv ztwm uvej',
     },
   });
 
   // Email options
   const mailOptions = {
-    from: 'usmanzulfiqar14@gmail.com',
+    from: 'wingedxnetwork@gmail.com',
     to: email,
     subject: 'Your OTP Code',
     text: `Your OTP code is ${otp}`,
