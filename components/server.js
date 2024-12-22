@@ -23,6 +23,7 @@ const bcrypt = require('bcryptjs');
 const Task = require('./Task');
 const Asset = require('./Asset');
 const Banner = require('./Banner');
+const ScreenShot = require('./ScreenShot');
 
 const PORT = process.env.PORT || 8000;
 
@@ -604,6 +605,7 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
       { new: true } // Return the updated document
     );
 
+
     if (result) {
       res.json({ message: 'Refer coins added successfully', updatedAdmin: result });
     } else {
@@ -953,6 +955,63 @@ app.patch("/plot/:id", async (req, res) => {
   }
 });
 
+// GET all ScreenShots
+app.get('/screenshot', async (req, res) => {
+  try {
+    const screenshot = await ScreenShot.find();
+    res.json(screenshot);
+  } catch (error) {
+    console.error('Error fetching screenshot', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// POST create screenshot
+app.post('/screenshot', async (req, res) => {
+  try {
+    const { image1, image2, payerId, referId, coins, price, verify } = req.body;
+
+    if (!image1 || !image2) {
+      return res.status(400).json({ error: 'screenshot and image URL are required.' });
+    }
+
+    const newScreenShot = new ScreenShot({ image1, image2, payerId, referId, coins, price, verify });
+    await newScreenShot.save();
+    res.status(201).json(newScreenShot);
+  } catch (error) {
+    console.error('Error creating screenshot:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+// DELETE screenshot
+app.delete('/screenshot/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedScreenshot = await Category.findByIdAndDelete(id);
+    if (!deletedScreenshot) {
+      res.status(404).json({ message: 'screenshot not found' });
+    } else {
+      res.json({ message: 'screenshot deleted successfully' });
+    }
+  } catch (error) {
+    console.error('Error deleting screenshot', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.patch("/screenshot/:id", async (req, res) => {
+  try {
+    const _id = req.params.id;
+    const updatescreenshot = await Category.findByIdAndUpdate(_id, req.body, {
+      new: true
+    });
+    res.send(updatescreenshot);
+  }
+  catch (e) {
+    res.status(400).send(e);
+  }
+});
 
 // GET all categories
 app.get('/category', async (req, res) => {
