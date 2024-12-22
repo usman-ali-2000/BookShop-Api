@@ -35,6 +35,7 @@ const adminSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+<<<<<<< HEAD
     nfuc: {
         type: Number,
         default: 0
@@ -50,6 +51,8 @@ const adminSchema = new mongoose.Schema({
     accType: {
         type: String,
     },
+=======
+>>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
     date: {
         type: String,
         default: new Date().toString()
