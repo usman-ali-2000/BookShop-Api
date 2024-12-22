@@ -245,10 +245,8 @@ app.delete("/banner/:id", async (req, res) => {
 
 app.get('/asset', async (req, res) => {
   try {
-
     const assets = await Asset.find(); // Sort by createdAt in descending order
     res.status(200).json({ assets });
-    
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve tasks' });
   }
@@ -481,8 +479,8 @@ app.patch('/register/:id/add-coins', async (req, res) => {
   try {
     const result = await AdminRegister.findByIdAndUpdate(
       _id,
-      { $inc: { coin: additionalCoins } },
-      { new: true }
+      { $inc: { coin: additionalCoins } }, 
+      { new: true } 
     );
 
     if (result) {
@@ -496,30 +494,30 @@ app.patch('/register/:id/add-coins', async (req, res) => {
   }
 });
 
-// PATCH route to add coins to an admin's existing coin balance and optionally update accType
 app.patch('/register/:id/add-nfuc', async (req, res) => {
   const _id = req.params.id;
   const { additionalCoins, accType } = req.body;
 
-  // Validate `additionalCoins`
+  // Validate that additionalCoins is a number
   if (typeof additionalCoins !== 'number') {
     return res.status(400).json({ error: 'additionalCoins must be a number' });
   }
 
-  // Prepare update object
-  const updateFields = {
-    $inc: { nfuc: additionalCoins }, // Increment the coin field
-  };
-
-  // Add accType to update only if it is provided
-  if (accType) {
-    updateFields.$set = { accType };
-  }
-
   try {
+    // Build the update object dynamically
+    const updateData = {
+      $inc: { nfuc: additionalCoins }, // Increment the nfuc field
+    };
+
+    // If accType is provided, add it to the update object
+    if (accType) {
+      updateData.$set = { accType: accType }; // Set the accType if provided
+    }
+
+    // Perform the update
     const result = await AdminRegister.findByIdAndUpdate(
       _id,
-      updateFields,
+      updateData,
       { new: true } // Return the updated document
     );
 
