@@ -80,13 +80,6 @@ async function generateUniqueId() {
 }
 
 
-<<<<<<< HEAD
-=======
-
-
-
-
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 9000); // 6-digit OTP
 };
@@ -119,10 +112,7 @@ app.post('/send-otp', async (req, res) => {
 
   // Email options
   const mailOptions = {
-<<<<<<< HEAD
 
-=======
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
     from: 'wingedxnetwork@gmail.com',
     to: email,
     subject: 'Your OTP Code',
@@ -221,11 +211,7 @@ app.get('/banner', async (req, res) => {
 });
 
 app.post('/banner', async (req, res) => {
-<<<<<<< HEAD
   const { banner } = req.body;
-=======
-  const { banner} = req.body;
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
 
   try {
     const newBanner = new Banner({
@@ -259,8 +245,10 @@ app.delete("/banner/:id", async (req, res) => {
 
 app.get('/asset', async (req, res) => {
   try {
+
     const assets = await Asset.find(); // Sort by createdAt in descending order
     res.status(200).json({ assets });
+    
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve tasks' });
   }
@@ -387,14 +375,7 @@ app.get('/task/:userId', async (req, res) => {
   const { userId } = req.params;
 
   try {
-<<<<<<< HEAD
     const tasks = await Task.find();
-=======
-    // Fetch all tasks
-    const tasks = await Task.find();
-
-    // Separate tasks into viewed and not viewed based on whether the user's ID is in the views array
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
     const viewedTasks = tasks.filter(task => task.views.includes(userId));
     const notViewedTasks = tasks.filter(task => !task.views.includes(userId));
 
@@ -466,11 +447,6 @@ app.patch("/register/:email", async (req, res) => {
     const { email } = req.params;
     let updateData = req.body;
 
-<<<<<<< HEAD
-=======
-    // If password is being updated, hash it
-
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
     if (updateData.password) {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(updateData.password, saltRounds);
@@ -491,13 +467,9 @@ app.patch("/register/:email", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 
 // PATCH route to add coins to an admin's existing coin balance
 
-=======
-// PATCH route to add coins to an admin's existing coin balance
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
 app.patch('/register/:id/add-coins', async (req, res) => {
   const _id = req.params.id;
   const { additionalCoins } = req.body;
@@ -509,7 +481,6 @@ app.patch('/register/:id/add-coins', async (req, res) => {
   try {
     const result = await AdminRegister.findByIdAndUpdate(
       _id,
-<<<<<<< HEAD
       { $inc: { coin: additionalCoins } },
       { new: true }
     );
@@ -549,9 +520,6 @@ app.patch('/register/:id/add-nfuc', async (req, res) => {
     const result = await AdminRegister.findByIdAndUpdate(
       _id,
       updateFields,
-=======
-      { $inc: { coin: additionalCoins } }, // Increment the coin field
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
       { new: true } // Return the updated document
     );
 
@@ -566,10 +534,7 @@ app.patch('/register/:id/add-nfuc', async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
 app.patch('/attempts/:id', async (req, res) => {
 
   const _id = req.params.id;
@@ -625,7 +590,6 @@ app.patch('/register/generated/:generatedId/refer-coins', async (req, res) => {
 });
 
 
-<<<<<<< HEAD
 // PATCH route to add coins to an referCoins existing coin balance
 app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
   const { generatedId } = req.params;
@@ -654,8 +618,6 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
 });
 
 
-=======
->>>>>>> 40a91a398523843665fe1f81ce4377f42373bfa7
 app.post("/register", async (req, res) => {
   try {
     console.log('Received request body:', req.body);
