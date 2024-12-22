@@ -24,6 +24,10 @@ const ScreenShotSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    type: {
+        type: String,
+        default: "fresh"
+    },
     verify: {
         type: Boolean,
         default: false
