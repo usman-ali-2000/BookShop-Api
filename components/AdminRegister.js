@@ -47,7 +47,7 @@ const adminSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    accType: {
+    accType:{
         type: String,
     },
     date: {
