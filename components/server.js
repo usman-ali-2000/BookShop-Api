@@ -496,7 +496,7 @@ app.patch('/register/:id/add-coins', async (req, res) => {
 
 app.patch('/register/:id/add-nfuc', async (req, res) => {
   const _id = req.params.id;
-  const { additionalCoins } = req.body;
+  const { additionalCoins, accType } = req.body;
 
   // Validate that additionalCoins is a number
   if (typeof additionalCoins !== 'number') {
@@ -510,9 +510,9 @@ app.patch('/register/:id/add-nfuc', async (req, res) => {
     };
 
     // If accType is provided, add it to the update object
-    // if (accType) {
-    //   updateData.$set = { accType: accType }; // Set the accType if provided
-    // }
+    if (accType) {
+      updateData.$set = { accType: accType }; // Set the accType if provided
+    }
 
     // Perform the update
     const result = await AdminRegister.findByIdAndUpdate(
