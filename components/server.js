@@ -38,47 +38,23 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 
-async function generateUniqueId() {
+const generateUniqueId = async () => {
   const date = new Date();
-  // Format date as YYMMDD
-  const dateString = date.toISOString().slice(2, 10).replace(/-/g, '');
+  const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
 
-  // Get the count of users created today
-  const startOfDay = new Date(date.setHours(0, 0, 0, 0)); // start of today
-  const endOfDay = new Date(date.setHours(23, 59, 59, 999)); // end of today
-  const count = await AdminRegister.countDocuments({
-    createdAt: { $gte: startOfDay, $lt: endOfDay },
-  });
+  // Use a counter collection to atomically increment the count
+  const counter = await AdminRegister.findOneAndUpdate(
+    { date: dateString },
+    { $inc: { count: 1 } },
+    { new: true, upsert: true }
+  );
 
-  // Increment the count by 1 to get the current user's position for today
-  const userCountToday = count + 1;
-
-  // Base unique ID without random suffix
-  let uniqueId = `${dateString}${userCountToday}`;
-
-  // Check if this ID already exists in the database
-  let existingUser = await AdminRegister.findOne({ generatedId: uniqueId });
-
-  // Keep track of attempts to prevent infinite loop
-  let maxAttempts = 10;
-  let attempts = 0;
-
-  // Loop until a unique ID is found or max attempts are reached
-  while (existingUser && attempts < maxAttempts) {
-    attempts++;
-    maxAttempts++;
-    const randomSuffix = Math.floor(Math.random() * 10000); // Random number between 0 and 999
-    uniqueId = `${dateString}${userCountToday}${randomSuffix}`;
-    existingUser = await AdminRegister.findOne({ generatedId: uniqueId });
-  }
-
-  // If max attempts reached without a unique ID, handle accordingly
-  if (attempts === maxAttempts) {
-    throw new Error("Could not generate a unique ID after multiple attempts");
-  }
+  // Generate the unique ID
+  const uniqueId = `${dateString}${counter.count}`;
 
   return uniqueId;
-}
+};
+
 
 
 const generateOTP = () => {
