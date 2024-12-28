@@ -592,6 +592,7 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while adding refer coins' });
   }
 });
+
 app.patch('/register/transfer-nfuc', async (req, res) => {
   const { senderId, receiverId, amount } = req.body;
 
@@ -600,22 +601,18 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
     return res.status(400).json({ error: 'Amount must be a positive number' });
   }
 
-  console.log('Transfer Request:', { senderId, receiverId, amount }); // Log input
-
   try {
-    // Start a session
+    // Start a transaction-like process
     const session = await AdminRegister.startSession();
     session.startTransaction();
 
     try {
-      console.log('Searching for sender with ID:', senderId);
+      // Decrement coins from the sender
       const senderUpdate = await AdminRegister.findOneAndUpdate(
         { generatedId: senderId },
         { $inc: { nfuc: -amount } },
-        { new: true, session }
+        { new: true, session } // Use the session
       );
-
-      console.log('Sender found:', senderUpdate); // Log sender data
 
       if (!senderUpdate) {
         throw new Error('Sender with the given ID not found');
@@ -625,14 +622,12 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
         throw new Error('Sender does not have enough coins');
       }
 
-      console.log('Searching for receiver with ID:', receiverId);
+      // Increment coins for the receiver
       const receiverUpdate = await AdminRegister.findOneAndUpdate(
         { generatedId: receiverId },
         { $inc: { nfuc: amount } },
-        { new: true, session }
+        { new: true, session } // Use the session
       );
-
-      console.log('Receiver found:', receiverUpdate); // Log receiver data
 
       if (!receiverUpdate) {
         throw new Error('Receiver with the given ID not found');
@@ -648,6 +643,7 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
         receiver: receiverUpdate,
       });
     } catch (transactionError) {
+      // Abort the transaction in case of an error
       await session.abortTransaction();
       session.endSession();
       console.error('Transaction failed:', transactionError);
@@ -658,7 +654,6 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
     res.status(500).json({ error: 'An error occurred during the transfer process' });
   }
 });
-
 
 
 
