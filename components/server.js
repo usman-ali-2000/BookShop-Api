@@ -593,6 +593,63 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
   }
 });
 
+// PATCH route to add coins to an referCoins existing coin balance
+app.patch('/register/generated/:generatedId/send-nfuc', async (req, res) => {
+  const { generatedId } = req.params;
+  const { sendNfuc } = req.body;
+
+  if (typeof sendNfuc !== 'number') {
+    return res.status(400).json({ error: 'referCoins must be a number' });
+  }
+
+  try {
+    const result = await AdminRegister.findOneAndUpdate(
+      { generatedId: generatedId }, // Find by custom `generatedId` field
+      { $inc: { nfuc: sendNfuc } }, // Increment the referCoin field
+      { new: true } // Return the updated document
+    );
+
+
+    if (result) {
+      res.json({ message: 'Refer coins added successfully', updatedAdmin: result });
+    } else {
+      res.status(404).json({ error: 'Admin with the given generated ID not found' });
+    }
+  } catch (error) {
+    console.error("Error adding refer coins:", error);
+    res.status(500).json({ error: 'An error occurred while adding refer coins' });
+  }
+});
+
+
+// PATCH route to add coins to an referCoins existing coin balance
+app.patch('/register/generated/:generatedId/decrement-nfuc', async (req, res) => {
+  const { generatedId } = req.params;
+  const { sendNfuc } = req.body;
+
+  if (typeof sendNfuc !== 'number') {
+    return res.status(400).json({ error: 'referCoins must be a number' });
+  }
+
+  try {
+    const result = await AdminRegister.findOneAndUpdate(
+      { generatedId: generatedId }, // Find by custom `generatedId` field
+      { $inc: { nfuc: -sendNfuc } }, // Increment the referCoin field
+      { new: true } // Return the updated document
+    );
+
+
+    if (result) {
+      res.json({ message: 'Refer coins added successfully', updatedAdmin: result });
+    } else {
+      res.status(404).json({ error: 'Admin with the given generated ID not found' });
+    }
+  } catch (error) {
+    console.error("Error adding refer coins:", error);
+    res.status(500).json({ error: 'An error occurred while adding refer coins' });
+  }
+});
+
 
 app.post("/register", async (req, res) => {
   try {
