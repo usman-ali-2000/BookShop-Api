@@ -593,63 +593,65 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
   }
 });
 
-// PATCH route to add coins to an existing NFUC balance
-app.patch('/register/generated/:generatedId/send-nfuc', async (req, res) => {
-  const { generatedId } = req.params;
-  const { sendNfuc } = req.body;
+app.patch('/register/transfer-nfuc', async (req, res) => {
+  const { senderId, receiverId, amount } = req.body;
 
   // Validate input
-  if (typeof sendNfuc !== 'number') {
-    return res.status(400).json({ error: 'sendNfuc must be a number' });
+  if (typeof amount !== 'number' || amount <= 0) {
+    return res.status(400).json({ error: 'Amount must be a positive number' });
   }
 
   try {
-    // Update the nfuc balance
-    const result = await AdminRegister.findOneAndUpdate(
-      { generatedId: generatedId }, // Find by custom `generatedId` field
-      { $inc: { nfuc: sendNfuc } }, // Increment the nfuc field
-      { new: true } // Return the updated document
-    );
+    // Start a transaction-like process
+    const session = await AdminRegister.startSession();
+    session.startTransaction();
 
-    if (result) {
-      res.json({ message: 'NFUC coins added successfully', updatedAdmin: result });
-    } else {
-      res.status(404).json({ error: 'Admin with the given generated ID not found' });
+    try {
+      // Decrement coins from the sender
+      const senderUpdate = await AdminRegister.findOneAndUpdate(
+        { generatedId: senderId },
+        { $inc: { nfuc: -amount } },
+        { new: true, session } // Use the session
+      );
+
+      if (!senderUpdate) {
+        throw new Error('Sender with the given ID not found');
+      }
+
+      if (senderUpdate.nfuc < 0) {
+        throw new Error('Sender does not have enough coins');
+      }
+
+      // Increment coins for the receiver
+      const receiverUpdate = await AdminRegister.findOneAndUpdate(
+        { generatedId: receiverId },
+        { $inc: { nfuc: amount } },
+        { new: true, session } // Use the session
+      );
+
+      if (!receiverUpdate) {
+        throw new Error('Receiver with the given ID not found');
+      }
+
+      // Commit the transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        message: 'Transfer successful',
+        sender: senderUpdate,
+        receiver: receiverUpdate,
+      });
+    } catch (transactionError) {
+      // Abort the transaction in case of an error
+      await session.abortTransaction();
+      session.endSession();
+      console.error('Transaction failed:', transactionError);
+      res.status(400).json({ error: transactionError.message });
     }
   } catch (error) {
-    console.error("Error adding NFUC coins:", error);
-    res.status(500).json({ error: 'An error occurred while adding NFUC coins' });
-  }
-});
-
-
-
-// PATCH route to decrement NFUC coins from an existing balance
-app.patch('/register/generated/:generatedId/decrement-nfuc', async (req, res) => {
-  const { generatedId } = req.params;
-  const { sendNfuc } = req.body;
-
-  // Validate input
-  if (typeof sendNfuc !== 'number') {
-    return res.status(400).json({ error: 'sendNfuc must be a number' });
-  }
-
-  try {
-    // Decrement the nfuc balance
-    const result = await AdminRegister.findOneAndUpdate(
-      { generatedId: generatedId }, // Find by custom `generatedId` field
-      { $inc: { nfuc: -sendNfuc } }, // Decrement the nfuc field
-      { new: true } // Return the updated document
-    );
-
-    if (result) {
-      res.json({ message: 'NFUC coins decremented successfully', updatedAdmin: result });
-    } else {
-      res.status(404).json({ error: 'Admin with the given generated ID not found' });
-    }
-  } catch (error) {
-    console.error("Error decrementing NFUC coins:", error);
-    res.status(500).json({ error: 'An error occurred while decrementing NFUC coins' });
+    console.error('Error during transfer:', error);
+    res.status(500).json({ error: 'An error occurred during the transfer process' });
   }
 });
 
