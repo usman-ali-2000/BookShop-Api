@@ -594,7 +594,7 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
   }
 });
 
-app.patch('/register/transfer-nfuc', async (req, res) => {
+app.patch('/register/transfer', async (req, res) => {
   const { senderId, receiverId, amount } = req.body;
 
   console.log('Sender ID:', senderId);
@@ -606,8 +606,8 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
   }
 
   try {
-    const sender = await AdminRegister.findOne({ generatedId: senderId });
-    const receiver = await AdminRegister.findOne({ generatedId: receiverId });
+    const sender = await AdminRegister.find({ generatedId: senderId });
+    const receiver = await AdminRegister.find({ generatedId: receiverId });
 
     if (!sender) {
       console.error(`Sender not found. Query: { generatedId: ${senderId} }`);
