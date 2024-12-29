@@ -603,53 +603,63 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
   }
 
   try {
-    // Start a transaction-like process
-    const session = await AdminRegister.startSession();
-    session.startTransaction();
 
-    try {
-      // Decrement coins from the sender
-      const senderUpdate = await AdminRegister.findOneAndUpdate(
-        { generatedId: senderId },
-        { $inc: { nfuc: -amount } },
-        { new: true } // Use the session
-      );
+    const sender = await AdminRegister.findOne({ generatedId: senderId });
 
-      if (!senderUpdate) {
-        throw new Error('Sender with the given ID not found');
-      }
-
-      if (senderUpdate.nfuc < 0) {
-        throw new Error('Sender does not have enough coins');
-      }
-
-      // Increment coins for the receiver
-      const receiverUpdate = await AdminRegister.findOneAndUpdate(
-        { generatedId: receiverId },
-        { $inc: { nfuc: amount } },
-        { new: true } // Use the session
-      );
-
-      if (!receiverUpdate) {
-        throw new Error('Receiver with the given ID not found');
-      }
-
-      // Commit the transaction
-      await session.commitTransaction();
-      session.endSession();
-
-      res.json({
-        message: `Transfer successful ${senderId}, ${receiverId}`,
-        sender: senderUpdate,
-        receiver: receiverUpdate,
-      });
-    } catch (transactionError) {
-      // Abort the transaction in case of an error
-      await session.abortTransaction();
-      session.endSession();
-      console.error('Transaction failed:', transactionError);
-      res.status(400).json({ error: transactionError.message });
+    const receiver = await AdminRegister.findOne({ generatedId: receiverId });
+    if (sender && receiver) {
+      res.status(200).json(`sender & RECEIVER: ${senderId}, ${receiverId}`);
+    } else {
+      res.status(400).json(`sender & RECEIVER: ${senderId}, ${receiverId}`);
     }
+
+    // // Start a transaction-like process
+    // const session = await AdminRegister.startSession();
+    // session.startTransaction();
+
+    // try {
+    //   // Decrement coins from the sender
+    //   const senderUpdate = await AdminRegister.findOneAndUpdate(
+    //     { generatedId: senderId },
+    //     { $inc: { nfuc: -amount } },
+    //     { new: true, session } // Use the session
+    //   );
+
+    //   if (!senderUpdate) {
+    //     throw new Error('Sender with the given ID not found');
+    //   }
+
+    //   if (senderUpdate.nfuc < 0) {
+    //     throw new Error('Sender does not have enough coins');
+    //   }
+
+    //   // Increment coins for the receiver
+    //   const receiverUpdate = await AdminRegister.findOneAndUpdate(
+    //     { generatedId: receiverId },
+    //     { $inc: { nfuc: amount } },
+    //     { new: true, session } // Use the session
+    //   );
+
+    //   if (!receiverUpdate) {
+    //     throw new Error('Receiver with the given ID not found');
+    //   }
+
+    //   // Commit the transaction
+    //   await session.commitTransaction();
+    //   session.endSession();
+
+    //   res.json({
+    //     message: `Transfer successful ${senderId}, ${receiverId}`,
+    //     sender: senderUpdate,
+    //     receiver: receiverUpdate,
+    //   });
+    // } catch (transactionError) {
+    //   // Abort the transaction in case of an error
+    //   await session.abortTransaction();
+    //   session.endSession();
+    //   console.error('Transaction failed:', transactionError);
+    //   res.status(400).json({ error: transactionError.message });
+    // }
   } catch (error) {
     console.error('Error during transfer:', error);
     res.status(500).json({ error: 'An error occurred during the transfer process' });
