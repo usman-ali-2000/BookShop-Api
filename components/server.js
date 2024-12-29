@@ -567,6 +567,7 @@ app.patch('/register/generated/:generatedId/refer-coins', async (req, res) => {
 
 // PATCH route to add coins to an referCoins existing coin balance
 app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
+
   const { generatedId } = req.params;
   const { nfucRefer } = req.body;
 
@@ -638,7 +639,7 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
       session.endSession();
 
       res.json({
-        message: 'Transfer successful',
+        message: `Transfer successful ${senderId}, ${receiverId}`,
         sender: senderUpdate,
         receiver: receiverUpdate,
       });
