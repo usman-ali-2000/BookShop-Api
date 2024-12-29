@@ -606,8 +606,8 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
   }
 
   try {
-    const sender = await AdminRegister.findOne({ generatedId: senderId.toString() });
-    const receiver = await AdminRegister.findOne({ generatedId: receiverId.toString() });
+    const sender = await AdminRegister.findOne({ generatedId: String(senderId).trim() });
+    const receiver = await AdminRegister.findOne({ generatedId: String(receiverId).trim() });
 
     if (!sender) {
       console.error(`Sender not found. Query: { generatedId: ${senderId} }`);
