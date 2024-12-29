@@ -612,7 +612,7 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
       const senderUpdate = await AdminRegister.findOneAndUpdate(
         { generatedId: senderId },
         { $inc: { nfuc: -amount } },
-        { new: true, session } // Use the session
+        { new: true } // Use the session
       );
 
       if (!senderUpdate) {
@@ -627,7 +627,7 @@ app.patch('/register/transfer-nfuc', async (req, res) => {
       const receiverUpdate = await AdminRegister.findOneAndUpdate(
         { generatedId: receiverId },
         { $inc: { nfuc: amount } },
-        { new: true, session } // Use the session
+        { new: true } // Use the session
       );
 
       if (!receiverUpdate) {
