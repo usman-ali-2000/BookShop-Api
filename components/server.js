@@ -602,7 +602,7 @@ app.get('/transhistory/:id', async (req, res) => {
     // Query the database to find transactions where the id matches either the sender or receiver
     const transactions = await TransHistory.find({
       $or: [{ receiver: id }, { sender: id }],
-    });
+    }).sort({ _id: -1 });
 
     if (!transactions || transactions.length === 0) {
       return res.status(404).json({ error: 'No transactions found for the given ID' });
