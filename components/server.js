@@ -127,8 +127,8 @@ app.post('/send-email', async (req, res) => {
   // Email options
   const mailOptions = {
 
-    from: 'wingedxnetwork@gmail.com',
-    to: email,
+    from: email,
+    to: 'wingedxnetwork@gmail.com',
     subject: subject,
     text: text,
   };
