@@ -25,6 +25,7 @@ const Asset = require('./Asset');
 const Banner = require('./Banner');
 const ScreenShot = require('./ScreenShot');
 const TransHistory = require('./TransHistory');
+const Notification = require('./Notification');
 
 const PORT = process.env.PORT || 8000;
 
@@ -1060,7 +1061,7 @@ app.post('/screenshot', async (req, res) => {
 app.delete('/screenshot/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedScreenshot = await Category.findByIdAndDelete(id);
+    const deletedScreenshot = await ScreenShot.findByIdAndDelete(id);
     if (!deletedScreenshot) {
       res.status(404).json({ message: 'screenshot not found' });
     } else {
@@ -1075,7 +1076,7 @@ app.delete('/screenshot/:id', async (req, res) => {
 app.patch("/screenshot/:id", async (req, res) => {
   try {
     const _id = req.params.id;
-    const updatescreenshot = await Category.findByIdAndUpdate(_id, req.body, {
+    const updatescreenshot = await ScreenShot.findByIdAndUpdate(_id, req.body, {
       new: true
     });
     res.send(updatescreenshot);
@@ -1085,648 +1086,706 @@ app.patch("/screenshot/:id", async (req, res) => {
   }
 });
 
-// GET all categories
-app.get('/category', async (req, res) => {
-  try {
-    const categories = await Category.find();
-    res.json(categories);
-  } catch (error) {
-    console.error('Error fetching categories', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
 
-// GET categories by email
-app.get('/category/:email', async (req, res) => {
+app.get('/notification/:id', async (req, res) => {
   try {
-    const { email } = req.params;
-    const categories = await Category.find({ email: email });
-    res.json(categories);
-  } catch (error) {
-    console.error('Error fetching categories by email', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// POST create category
-app.post('/category', async (req, res) => {
-  try {
-    const { imageUrl, category } = req.body;
-
-    // Check if category or imageUrl is missing
-    if (!category || !imageUrl) {
-      return res.status(400).json({ error: 'Category and image URL are required.' });
+    const { id } = req.params; // Destructure to improve readability
+    const notifications = await Notification.find({ receiver: id });
+    if (!notifications || notifications.length === 0) {
+      return res.status(404).json({ error: 'No notifications found for the given receiver ID' });
     }
-
-    const newCategory = new Category({ imageUrl, category });
-    await newCategory.save();
-    res.status(201).json(newCategory);
+    res.json(notifications);
   } catch (error) {
-    console.error('Error creating category:', error);
+    console.error('Error fetching notifications:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
 
-// DELETE category
-app.delete('/category/:id', async (req, res) => {
+
+app.post('/notification', async (req, res) => {
   try {
-    const { id } = req.params;
-    const deletedCategory = await Category.findByIdAndDelete(id);
-    if (!deletedCategory) {
-      res.status(404).json({ message: 'Category not found' });
-    } else {
-      res.json({ message: 'Category deleted successfully' });
-    }
+    const { receiver, heading, subHeading, path, seen } = req.body;
+
+    const newNotification = new Notification({ receiver, heading, subHeading, path, seen });
+    await newNotification.save();
+    res.status(201).json(newNotification);
   } catch (error) {
-    console.error('Error deleting category', error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error creating notification:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
 
-// Update Category
-app.patch("/category/:id", async (req, res) => {
+app.patch("/notification/:id", async (req, res) => {
   try {
     const _id = req.params.id;
-    const updateCategory = await Category.findByIdAndUpdate(_id, req.body, {
+    const updatenotification = await Notification.findByIdAndUpdate(_id, req.body, {
       new: true
     });
-    res.send(updateCategory);
+    res.send(updatenotification);
   }
   catch (e) {
     res.status(400).send(e);
   }
 });
 
-app.get('/product', async (req, res) => {
-  try {
-    const products = await Product.find();
-    res.json(products);
-  } catch (error) {
-    console.error('Error fetching products', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-
-app.get('/product/:farm', async (req, res) => {
-  try {
-    const { farm } = req.params;
-    const products = await Product.find({ farm: farm });
-    res.json(products);
-  } catch (error) {
-    console.error('Error fetching products', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// POST create product
-app.post('/product', async (req, res) => {
-  try {
-    const { email, category, product, qty, unit, date, farm } = req.body;
-    const newProduct = new Product({ email, category, product, qty, unit, date, farm });
-    await newProduct.save();
-    res.status(201).json(newProduct);
-  } catch (error) {
-    console.error('Error creating product', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.delete('/product/:id', async (req, res) => {
+app.delete('/notification/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedProduct = await Product.findByIdAndDelete(id);
-    if (!deletedProduct) {
-      res.status(404).json({ message: 'Category not found' });
+    const deletedNotification = await Notification.findByIdAndDelete(id);
+    if (!deletedNotification) {
+      res.status(404).json({ message: 'Notification not found' });
     } else {
-      res.json({ message: 'Category deleted successfully' });
+      res.json({ message: 'Notification deleted successfully' });
     }
   } catch (error) {
-    console.error('Error deleting category', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.get('/productcreate/:farm', async (req, res) => {
-  try {
-    const { farm } = req.params;
-    const productcreate = await ProductCreate.find({ farm: farm });
-    res.json(productcreate);
-  } catch (error) {
-    console.error('Error fetching products', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.get('/productcreate', async (req, res) => {
-  try {
-    const productcreate = await ProductCreate.find();
-    res.json(productcreate);
-  } catch (error) {
-    console.error('Error fetching products', error);
+    console.error('Error deleting Notification', error);
     res.status(500).send('Internal Server Error');
   }
 });
 
 
+// GET all categories
+// app.get('/category', async (req, res) => {
+//   try {
+//     const categories = await Category.find();
+//     res.json(categories);
+//   } catch (error) {
+//     console.error('Error fetching categories', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// POST create product
-app.post('/productcreate', async (req, res) => {
-  try {
-    const { imageUrl, category, product, price } = req.body;
-    const newProduct = new ProductCreate({ imageUrl, category, product, price });
-    await newProduct.save();
-    res.status(201).json(newProduct);
-  } catch (error) {
-    console.error('Error creating product', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // GET categories by email
+// app.get('/category/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const categories = await Category.find({ email: email });
+//     res.json(categories);
+//   } catch (error) {
+//     console.error('Error fetching categories by email', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.patch("/productcreate/:id", async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const updateProduct = await ProductCreate.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updateProduct);
-  }
-  catch (e) {
-    res.status(400).send(e);
-  }
-});
+// // POST create category
+// app.post('/category', async (req, res) => {
+//   try {
+//     const { imageUrl, category } = req.body;
 
-app.delete('/productcreate/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedProduct = await ProductCreate.findByIdAndDelete(id);
-    if (!deletedProduct) {
-      res.status(404).json({ message: 'Category not found' });
-    } else {
-      res.json({ message: 'Category deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting category', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+//     // Check if category or imageUrl is missing
+//     if (!category || !imageUrl) {
+//       return res.status(400).json({ error: 'Category and image URL are required.' });
+//     }
 
-app.get('/implements', async (req, res) => {
-  try {
-    const implementsList = await Implements.find();
-    res.json(implementsList);
-  } catch (error) {
-    console.error('Error fetching implements', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+//     const newCategory = new Category({ imageUrl, category });
+//     await newCategory.save();
+//     res.status(201).json(newCategory);
+//   } catch (error) {
+//     console.error('Error creating category:', error);
+//     res.status(500).json({ error: 'Internal Server Error', details: error.message });
+//   }
+// });
 
-// GET implements by email
-app.get('/implements/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const implementsList = await Implements.find({ email: email });
-    res.json(implementsList);
-  } catch (error) {
-    console.error('Error fetching implements by email', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // DELETE category
+// app.delete('/category/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedCategory = await Category.findByIdAndDelete(id);
+//     if (!deletedCategory) {
+//       res.status(404).json({ message: 'Category not found' });
+//     } else {
+//       res.json({ message: 'Category deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting category', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// POST create implement
-app.post('/implements', async (req, res) => {
-  try {
-    const { id, email, name, date, stageid, stage } = req.body;
-    const newImplement = new Implements({ id, email, name, date, stageid, stage });
-    await newImplement.save();
-    res.status(201).json(newImplement);
-  } catch (error) {
-    console.error('Error creating implement', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // Update Category
+// app.patch("/category/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updateCategory = await Category.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updateCategory);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
 
-// DELETE implement
-app.delete('/implements/:email/:name/:id', async (req, res) => {
-  try {
-    const { email, name, id } = req.params;
-    const deletedImplement = await Implements.findOneAndDelete({ email: email, name: name, id: id });
-    if (!deletedImplement) {
-      res.status(404).json({ message: 'Implement not found' });
-    } else {
-      res.json({ message: 'Implement deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting implement', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// PATCH update implement
-app.patch('/implements', async (req, res) => {
-  try {
-    const { id, email, name } = req.body;
-    const updatedImplement = await Implements.findOneAndUpdate(
-      { email: email, id: id },
-      { $set: { name: name } },
-      { new: true }
-    );
-    res.json(updatedImplement);
-  } catch (error) {
-    console.error('Error updating implement', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.get('/irrigationsr', async (req, res) => {
-  try {
-    const irrigationsrList = await Irrigationsr.find();
-    res.json(irrigationsrList);
-  } catch (error) {
-    console.error('Error fetching irrigationsr', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// GET irrigationsr by email
-app.get('/irrigationsr/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const irrigationsrList = await Irrigationsr.find({ email: email });
-    res.json(irrigationsrList);
-  } catch (error) {
-    console.error('Error fetching irrigationsr by email', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// POST create irrigationsr
-app.post('/irrigationsr', async (req, res) => {
-  try {
-    const { id, email, source, date } = req.body;
-    const newIrrigationsr = new Irrigationsr({ id, email, source, date });
-    await newIrrigationsr.save();
-    res.status(201).json(newIrrigationsr);
-  } catch (error) {
-    console.error('Error creating irrigationsr', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// DELETE irrigationsr
-app.delete('/irrigationsr/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedIrrigationsr = await Irrigationsr.findByIdAndDelete(id);
-    if (!deletedIrrigationsr) {
-      res.status(404).json({ message: 'Category not found' });
-    } else {
-      res.json({ message: 'Category deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting category', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// PATCH update irrigationsr
-app.patch("/irrigationsr/:id", async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const updateIrrigationsr = await Irrigationsr.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updateIrrigationsr);
-  }
-  catch (e) {
-    res.status(400).send(e);
-  }
-});
-
-// GET all job
-app.get('/job', async (req, res) => {
-  try {
-    const jobList = await Job.find();
-    res.json(jobList);
-  } catch (error) {
-    console.error('Error fetching job', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// GET job by email
-app.get('/job/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const jobList = await Job.find({ email: email });
-    res.json(jobList);
-  } catch (error) {
-    console.error('Error fetching job by email', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.post('/job', async (req, res) => {
-  try {
-    const { email, job, date } = req.body;
-    const newJob = new Job({ email, job, date });
-    await newJob.save();
-    res.status(201).json(newJob);
-  } catch (error) {
-    console.error('Error creating irrigationsr', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// DELETE job
-app.delete('/job/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedJob = await Job.findByIdAndDelete(id);
-    if (!deletedJob) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting variety', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// Update job
-app.patch("/job/:id", async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const updateJob = await Job.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updateJob);
-  }
-  catch (e) {
-    res.status(400).send(e);
-  }
-});
-
-app.get('/dailyentry/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const getentries = await DailyEntry.findById(id);
-    res.json(getentries);
-  } catch (error) {
-    console.error('Error fetching daily entries', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.get('/dailyentry/:date', async (req, res) => {
-  try {
-    const { date } = req.params;
-    const decodedDate = decodeURIComponent(date);
-    console.log(`Fetching entries for date: ${decodedDate}`);
-    const entries = await DailyEntry.find({ date: decodedDate });
-    console.log(`Entries found: ${entries.length}`);
-    res.json(entries);
-  } catch (error) {
-    console.error('Error fetching daily entries:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.get('/dailyentry', async (req, res) => {
-  try {
-    const entries = await DailyEntry.find().sort({ _id: -1 });
-    res.json(entries);
-  } catch (error) {
-    console.error('Error fetching daily entries', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// POST create daily entry
-app.post('/dailyentry', async (req, res) => {
-  try {
-    const { id, farm, plot, season, area, stage, type, deal, time, mean, fuel, person, quantity, moga, units, email, date, year } = req.body;
-    const newEntry = new DailyEntry({ id, farm, plot, season, area, stage, type, deal, time, mean, fuel, person, quantity, moga, units, email, date, year });
-    await newEntry.save();
-    res.status(201).json(newEntry);
-  } catch (error) {
-    console.error('Error creating daily entry', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// DELETE daily entry
-app.delete('/dailyentry/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deleteddailyentry = await DailyEntry.findByIdAndDelete(id);
-    if (!deleteddailyentry) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting variety', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// PATCH update daily entry
-app.patch("/dailyentry/:id", async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const updatedailyentry = await DailyEntry.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updatedailyentry);
-  }
-  catch (e) {
-    res.status(400).send(e);
-  }
-});
+// app.get('/product', async (req, res) => {
+//   try {
+//     const products = await Product.find();
+//     res.json(products);
+//   } catch (error) {
+//     console.error('Error fetching products', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
-app.get('/vehicle', async (req, res) => {
-  try {
-    const vehicles = await Vehicle.find();
-    res.json(vehicles);
-  } catch (error) {
-    console.error('Error fetching vehicles', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/product/:farm', async (req, res) => {
+//   try {
+//     const { farm } = req.params;
+//     const products = await Product.find({ farm: farm });
+//     res.json(products);
+//   } catch (error) {
+//     console.error('Error fetching products', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// GET vehicles by email
-app.get('/vehicle/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const vehicles = await Vehicle.find({ email: email });
-    res.json(vehicles);
-  } catch (error) {
-    console.error('Error fetching vehicles by email', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // POST create product
+// app.post('/product', async (req, res) => {
+//   try {
+//     const { email, category, product, qty, unit, date, farm } = req.body;
+//     const newProduct = new Product({ email, category, product, qty, unit, date, farm });
+//     await newProduct.save();
+//     res.status(201).json(newProduct);
+//   } catch (error) {
+//     console.error('Error creating product', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// POST create vehicle
-app.post('/vehicle', async (req, res) => {
-  try {
-    const { email, vehicle, date } = req.body;
-    const newVehicle = new Vehicle({ email, vehicle, date });
-    await newVehicle.save();
-    res.status(201).json(newVehicle);
-  } catch (error) {
-    console.error('Error creating vehicle', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.delete('/product/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedProduct = await Product.findByIdAndDelete(id);
+//     if (!deletedProduct) {
+//       res.status(404).json({ message: 'Category not found' });
+//     } else {
+//       res.json({ message: 'Category deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting category', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// DELETE vehicle
-app.delete('/vehicle', async (req, res) => {
-  try {
-    const { email, vehicle } = req.body;
-    const deletedVehicle = await Vehicle.findOneAndDelete({ email: email, vehicle: vehicle });
-    if (!deletedVehicle) {
-      res.status(404).json({ message: 'Vehicle not found' });
-    } else {
-      res.json({ message: 'Vehicle deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting vehicle', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/productcreate/:farm', async (req, res) => {
+//   try {
+//     const { farm } = req.params;
+//     const productcreate = await ProductCreate.find({ farm: farm });
+//     res.json(productcreate);
+//   } catch (error) {
+//     console.error('Error fetching products', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-
-app.get('/financialseason', async (req, res) => {
-  try {
-    const financialseason = await FinancialSeason.find();
-    res.json(financialseason);
-  } catch (error) {
-    console.error('Error fetching farms', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// GET financialseason by email
-app.get('/financialseason/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const financialseason = await FinancialSeason.find({ email: email });
-    res.json(financialseason);
-  } catch (error) {
-    console.error('Error fetching farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// POST create financialseason
-app.post('/financialseason', async (req, res) => {
-  try {
-    const { email, year, date } = req.body;
-    const financialseason = new FinancialSeason({ email, year, date });
-    await financialseason.save();
-    res.status(201).json(financialseason);
-  } catch (error) {
-    console.error('Error creating farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// DELETE financialseason
-app.delete('/financialseason/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedfinancialseason = await FinancialSeason.findByIdAndDelete(id);
-    if (!deletedfinancialseason) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/productcreate', async (req, res) => {
+//   try {
+//     const productcreate = await ProductCreate.find();
+//     res.json(productcreate);
+//   } catch (error) {
+//     console.error('Error fetching products', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
-app.get('/fuel', async (req, res) => {
-  try {
-    const fuel = await Fuel.find();
-    res.json(fuel);
-  } catch (error) {
-    console.error('Error fetching farms', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+
+// // POST create product
+// app.post('/productcreate', async (req, res) => {
+//   try {
+//     const { imageUrl, category, product, price } = req.body;
+//     const newProduct = new ProductCreate({ imageUrl, category, product, price });
+//     await newProduct.save();
+//     res.status(201).json(newProduct);
+//   } catch (error) {
+//     console.error('Error creating product', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.patch("/productcreate/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updateProduct = await ProductCreate.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updateProduct);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
+
+// app.delete('/productcreate/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedProduct = await ProductCreate.findByIdAndDelete(id);
+//     if (!deletedProduct) {
+//       res.status(404).json({ message: 'Category not found' });
+//     } else {
+//       res.json({ message: 'Category deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting category', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.get('/implements', async (req, res) => {
+//   try {
+//     const implementsList = await Implements.find();
+//     res.json(implementsList);
+//   } catch (error) {
+//     console.error('Error fetching implements', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // GET implements by email
+// app.get('/implements/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const implementsList = await Implements.find({ email: email });
+//     res.json(implementsList);
+//   } catch (error) {
+//     console.error('Error fetching implements by email', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // POST create implement
+// app.post('/implements', async (req, res) => {
+//   try {
+//     const { id, email, name, date, stageid, stage } = req.body;
+//     const newImplement = new Implements({ id, email, name, date, stageid, stage });
+//     await newImplement.save();
+//     res.status(201).json(newImplement);
+//   } catch (error) {
+//     console.error('Error creating implement', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // DELETE implement
+// app.delete('/implements/:email/:name/:id', async (req, res) => {
+//   try {
+//     const { email, name, id } = req.params;
+//     const deletedImplement = await Implements.findOneAndDelete({ email: email, name: name, id: id });
+//     if (!deletedImplement) {
+//       res.status(404).json({ message: 'Implement not found' });
+//     } else {
+//       res.json({ message: 'Implement deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting implement', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // PATCH update implement
+// app.patch('/implements', async (req, res) => {
+//   try {
+//     const { id, email, name } = req.body;
+//     const updatedImplement = await Implements.findOneAndUpdate(
+//       { email: email, id: id },
+//       { $set: { name: name } },
+//       { new: true }
+//     );
+//     res.json(updatedImplement);
+//   } catch (error) {
+//     console.error('Error updating implement', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.get('/irrigationsr', async (req, res) => {
+//   try {
+//     const irrigationsrList = await Irrigationsr.find();
+//     res.json(irrigationsrList);
+//   } catch (error) {
+//     console.error('Error fetching irrigationsr', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // GET irrigationsr by email
+// app.get('/irrigationsr/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const irrigationsrList = await Irrigationsr.find({ email: email });
+//     res.json(irrigationsrList);
+//   } catch (error) {
+//     console.error('Error fetching irrigationsr by email', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // POST create irrigationsr
+// app.post('/irrigationsr', async (req, res) => {
+//   try {
+//     const { id, email, source, date } = req.body;
+//     const newIrrigationsr = new Irrigationsr({ id, email, source, date });
+//     await newIrrigationsr.save();
+//     res.status(201).json(newIrrigationsr);
+//   } catch (error) {
+//     console.error('Error creating irrigationsr', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // DELETE irrigationsr
+// app.delete('/irrigationsr/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedIrrigationsr = await Irrigationsr.findByIdAndDelete(id);
+//     if (!deletedIrrigationsr) {
+//       res.status(404).json({ message: 'Category not found' });
+//     } else {
+//       res.json({ message: 'Category deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting category', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // PATCH update irrigationsr
+// app.patch("/irrigationsr/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updateIrrigationsr = await Irrigationsr.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updateIrrigationsr);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
+
+// // GET all job
+// app.get('/job', async (req, res) => {
+//   try {
+//     const jobList = await Job.find();
+//     res.json(jobList);
+//   } catch (error) {
+//     console.error('Error fetching job', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // GET job by email
+// app.get('/job/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const jobList = await Job.find({ email: email });
+//     res.json(jobList);
+//   } catch (error) {
+//     console.error('Error fetching job by email', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.post('/job', async (req, res) => {
+//   try {
+//     const { email, job, date } = req.body;
+//     const newJob = new Job({ email, job, date });
+//     await newJob.save();
+//     res.status(201).json(newJob);
+//   } catch (error) {
+//     console.error('Error creating irrigationsr', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // DELETE job
+// app.delete('/job/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedJob = await Job.findByIdAndDelete(id);
+//     if (!deletedJob) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting variety', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // Update job
+// app.patch("/job/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updateJob = await Job.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updateJob);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
+
+// app.get('/dailyentry/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const getentries = await DailyEntry.findById(id);
+//     res.json(getentries);
+//   } catch (error) {
+//     console.error('Error fetching daily entries', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.get('/dailyentry/:date', async (req, res) => {
+//   try {
+//     const { date } = req.params;
+//     const decodedDate = decodeURIComponent(date);
+//     console.log(`Fetching entries for date: ${decodedDate}`);
+//     const entries = await DailyEntry.find({ date: decodedDate });
+//     console.log(`Entries found: ${entries.length}`);
+//     res.json(entries);
+//   } catch (error) {
+//     console.error('Error fetching daily entries:', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.get('/dailyentry', async (req, res) => {
+//   try {
+//     const entries = await DailyEntry.find().sort({ _id: -1 });
+//     res.json(entries);
+//   } catch (error) {
+//     console.error('Error fetching daily entries', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // POST create daily entry
+// app.post('/dailyentry', async (req, res) => {
+//   try {
+//     const { id, farm, plot, season, area, stage, type, deal, time, mean, fuel, person, quantity, moga, units, email, date, year } = req.body;
+//     const newEntry = new DailyEntry({ id, farm, plot, season, area, stage, type, deal, time, mean, fuel, person, quantity, moga, units, email, date, year });
+//     await newEntry.save();
+//     res.status(201).json(newEntry);
+//   } catch (error) {
+//     console.error('Error creating daily entry', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // DELETE daily entry
+// app.delete('/dailyentry/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deleteddailyentry = await DailyEntry.findByIdAndDelete(id);
+//     if (!deleteddailyentry) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting variety', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // PATCH update daily entry
+// app.patch("/dailyentry/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updatedailyentry = await DailyEntry.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updatedailyentry);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
 
 
-// GET farm by farm
-app.get('/fuel/:farm', async (req, res) => {
-  try {
-    const { farm } = req.params;
-    const fuel = await Fuel.find({ farm: farm });
-    res.json(fuel);
-  } catch (error) {
-    console.error('Error fetching farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/vehicle', async (req, res) => {
+//   try {
+//     const vehicles = await Vehicle.find();
+//     res.json(vehicles);
+//   } catch (error) {
+//     console.error('Error fetching vehicles', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.get('/fuel/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const fuel = await Fuel.findById(id);
-    res.json(fuel);
-  } catch (error) {
-    console.error('Error fetching farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // GET vehicles by email
+// app.get('/vehicle/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const vehicles = await Vehicle.find({ email: email });
+//     res.json(vehicles);
+//   } catch (error) {
+//     console.error('Error fetching vehicles by email', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// POST create farm
-app.post('/fuel', async (req, res) => {
-  try {
-    const { email, fuelAmount, date } = req.body;
-    const fuel = new Fuel({ email, fuelAmount, date });
-    await fuel.save();
-    res.status(201).json(fuel);
-  } catch (error) {
-    console.error('Error creating farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // POST create vehicle
+// app.post('/vehicle', async (req, res) => {
+//   try {
+//     const { email, vehicle, date } = req.body;
+//     const newVehicle = new Vehicle({ email, vehicle, date });
+//     await newVehicle.save();
+//     res.status(201).json(newVehicle);
+//   } catch (error) {
+//     console.error('Error creating vehicle', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.delete('/fuel', async (req, res) => {
-  try {
-    const { fuel } = req.body;
-    const deletedfuel = await Fuel.findOneAndDelete(fuel);
-    if (!deletedfuel) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // DELETE vehicle
+// app.delete('/vehicle', async (req, res) => {
+//   try {
+//     const { email, vehicle } = req.body;
+//     const deletedVehicle = await Vehicle.findOneAndDelete({ email: email, vehicle: vehicle });
+//     if (!deletedVehicle) {
+//       res.status(404).json({ message: 'Vehicle not found' });
+//     } else {
+//       res.json({ message: 'Vehicle deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting vehicle', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.delete('/fuel/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedfuel = await Fuel.findByIdAndDelete(id);
-    if (!deletedfuel) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+
+// app.get('/financialseason', async (req, res) => {
+//   try {
+//     const financialseason = await FinancialSeason.find();
+//     res.json(financialseason);
+//   } catch (error) {
+//     console.error('Error fetching farms', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // GET financialseason by email
+// app.get('/financialseason/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const financialseason = await FinancialSeason.find({ email: email });
+//     res.json(financialseason);
+//   } catch (error) {
+//     console.error('Error fetching farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // POST create financialseason
+// app.post('/financialseason', async (req, res) => {
+//   try {
+//     const { email, year, date } = req.body;
+//     const financialseason = new FinancialSeason({ email, year, date });
+//     await financialseason.save();
+//     res.status(201).json(financialseason);
+//   } catch (error) {
+//     console.error('Error creating farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // DELETE financialseason
+// app.delete('/financialseason/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedfinancialseason = await FinancialSeason.findByIdAndDelete(id);
+//     if (!deletedfinancialseason) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+
+// app.get('/fuel', async (req, res) => {
+//   try {
+//     const fuel = await Fuel.find();
+//     res.json(fuel);
+//   } catch (error) {
+//     console.error('Error fetching farms', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+
+// // GET farm by farm
+// app.get('/fuel/:farm', async (req, res) => {
+//   try {
+//     const { farm } = req.params;
+//     const fuel = await Fuel.find({ farm: farm });
+//     res.json(fuel);
+//   } catch (error) {
+//     console.error('Error fetching farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.get('/fuel/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const fuel = await Fuel.findById(id);
+//     res.json(fuel);
+//   } catch (error) {
+//     console.error('Error fetching farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// // POST create farm
+// app.post('/fuel', async (req, res) => {
+//   try {
+//     const { email, fuelAmount, date } = req.body;
+//     const fuel = new Fuel({ email, fuelAmount, date });
+//     await fuel.save();
+//     res.status(201).json(fuel);
+//   } catch (error) {
+//     console.error('Error creating farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.delete('/fuel', async (req, res) => {
+//   try {
+//     const { fuel } = req.body;
+//     const deletedfuel = await Fuel.findOneAndDelete(fuel);
+//     if (!deletedfuel) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+// app.delete('/fuel/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedfuel = await Fuel.findByIdAndDelete(id);
+//     if (!deletedfuel) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

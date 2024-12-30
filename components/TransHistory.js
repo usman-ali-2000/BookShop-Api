@@ -15,6 +15,10 @@ const TransHistorySchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    pending: {
+        type: Boolean,
+        default: true
+    },
     timestamp: {
         type: Date,
         default: Date.now
