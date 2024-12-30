@@ -107,6 +107,41 @@ app.post('/send-otp', async (req, res) => {
   }
 });
 
+app.post('/send-email', async (req, res) => {
+  const { email, text, subject } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  // Configure the Nodemailer transporter
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+
+      user: 'wingedxnetwork@gmail.com',
+      pass: 'ypfr himv ztwm uvej',
+    },
+  });
+
+  // Email options
+  const mailOptions = {
+
+    from: 'wingedxnetwork@gmail.com',
+    to: email,
+    subject: subject,
+    text: text,
+  };
+
+  try {
+    // Send email
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'email sent successfully' }); // You might want to store OTP in the database or session
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending email', error });
+  }
+});
+
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API...' })
