@@ -24,6 +24,7 @@ const Task = require('./Task');
 const Asset = require('./Asset');
 const Banner = require('./Banner');
 const ScreenShot = require('./ScreenShot');
+const TransHistory = require('./TransHistory');
 
 const PORT = process.env.PORT || 8000;
 
@@ -594,6 +595,26 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
   }
 });
 
+app.get('/transhistory/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Query the database to find transactions where the id matches either the sender or receiver
+    const transactions = await TransHistory.find({
+      $or: [{ receiver: id }, { sender: id }],
+    });
+
+    if (!transactions || transactions.length === 0) {
+      return res.status(404).json({ error: 'No transactions found for the given ID' });
+    }
+
+    res.json(transactions);
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 app.patch('/transfer-nfuc', async (req, res) => {
 
   const { senderId, receiverId, amount } = req.body;
@@ -635,6 +656,15 @@ app.patch('/transfer-nfuc', async (req, res) => {
         throw new Error('Receiver with the given ID not found');
       }
 
+
+      // Create transaction history record
+      const newTrans = new TransHistory({
+        sender: senderId,
+        receiver: receiverId,
+        nfuc: amount,
+      });
+      await newTrans.save({ session }); // Save within the same session
+
       // Commit the transaction
       await session.commitTransaction();
       session.endSession();
@@ -644,6 +674,7 @@ app.patch('/transfer-nfuc', async (req, res) => {
         sender: senderUpdate,
         receiver: receiverUpdate,
       });
+
     } catch (transactionError) {
       // Abort the transaction in case of an error
       await session.abortTransaction();
