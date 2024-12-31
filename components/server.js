@@ -26,6 +26,7 @@ const Banner = require('./Banner');
 const ScreenShot = require('./ScreenShot');
 const TransHistory = require('./TransHistory');
 const Notification = require('./Notification');
+const Withdraw = require('./Withdraw');
 
 const PORT = process.env.PORT || 8000;
 
@@ -118,7 +119,6 @@ app.post('/send-email', async (req, res) => {
   let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-
       user: 'wingedxnetwork@gmail.com',
       pass: 'ypfr himv ztwm uvej',
     },
@@ -1121,11 +1121,62 @@ app.patch("/screenshot/:id", async (req, res) => {
   }
 });
 
+app.get('/withdraw', async (req, res) => {
+  try {
+    const withdraw = await Withdraw.find().sort({ _id: -1 });
+    res.json(withdraw);
+  } catch (error) {
+    console.error('Error fetching withdraw', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+app.post('/withdraw', async (req, res) => {
+  try {
+    const { sender, receiver, usdt, pending } = req.body;
+
+    const newWithdraw = new Withdraw({ sender, receiver, usdt, pending });
+    await newWithdraw.save();
+    res.status(201).json(newWithdraw);
+  } catch (error) {
+    console.error('Error creating withdraw:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
+
+app.patch("/withdraw/:id", async (req, res) => {
+  try {
+    const _id = req.params.id;
+    const updatewithdraw = await Withdraw.findByIdAndUpdate(_id, req.body, {
+      new: true
+    });
+    res.send(updatewithdraw);
+  }
+  catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+app.delete('/withdraw/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedwithdraw = await Withdraw.findByIdAndDelete(id);
+    if (!deletedwithdraw) {
+      res.status(404).json({ message: 'screenshot not found' });
+    } else {
+      res.json({ message: 'withdraw deleted successfully' });
+    }
+  } catch (error) {
+    console.error('Error deleting withdraw', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 app.get('/notification/:id', async (req, res) => {
   try {
     const { id } = req.params; // Destructure to improve readability
-    const notifications = await Notification.find({ receiver: id });
+    const notifications = await Notification.find({ receiver: id }).sort({ _id: -1 });
     if (!notifications || notifications.length === 0) {
       return res.status(404).json({ error: 'No notifications found for the given receiver ID' });
     }
