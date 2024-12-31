@@ -1132,43 +1132,46 @@ app.get('/withdraw', async (req, res) => {
 });
 
 
-app.post('/withdraw', async (req, res) => {
+app.post('/transhistory', async (req, res) => {
   try {
-    const { sender, receiver, usdt, pending } = req.body;
-
-    const newWithdraw = new Withdraw({ sender, receiver, usdt, pending });
-    await newWithdraw.save();
-    res.status(201).json(newWithdraw);
+    const { sender, receiver, usdt } = req.body;
+    const newTrans = new TransHistory({
+      sender: sender,
+      receiver: receiver,
+      usdt: usdt,
+    });
+    await newTrans.save();
+    res.status(201).json(newTrans);
   } catch (error) {
     console.error('Error creating withdraw:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
 
-app.patch("/withdraw/:id", async (req, res) => {
+app.patch("/transhistory/:id", async (req, res) => {
   try {
     const _id = req.params.id;
-    const updatewithdraw = await Withdraw.findByIdAndUpdate(_id, req.body, {
+    const updatetranshistory = await TransHistory.findByIdAndUpdate(_id, req.body, {
       new: true
     });
-    res.send(updatewithdraw);
+    res.send(updatetranshistory);
   }
   catch (e) {
     res.status(400).send(e);
   }
 });
 
-app.delete('/withdraw/:id', async (req, res) => {
+app.delete('/transhistory/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedwithdraw = await Withdraw.findByIdAndDelete(id);
-    if (!deletedwithdraw) {
-      res.status(404).json({ message: 'screenshot not found' });
+    const deletedtranshistory = await TransHistory.findByIdAndDelete(id);
+    if (!deletedtranshistory) {
+      res.status(404).json({ message: 'transhistory not found' });
     } else {
-      res.json({ message: 'withdraw deleted successfully' });
+      res.json({ message: 'transhistory deleted successfully' });
     }
   } catch (error) {
-    console.error('Error deleting withdraw', error);
+    console.error('Error deleting transhistory', error);
     res.status(500).send('Internal Server Error');
   }
 });
