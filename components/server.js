@@ -743,7 +743,6 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ msg: 'Email already exists' });
     }
 
-    const generatedId = await generateUniqueId();
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -754,7 +753,6 @@ app.post("/register", async (req, res) => {
       name,
       phone,
       email,
-      generatedId: generatedId.toString(),
       userId,
       password: hashedPassword,
     });
