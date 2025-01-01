@@ -40,21 +40,23 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-
 const generateUniqueId = async () => {
   try {
     const date = new Date();
     const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD format
 
-    // Atomically increment the count for the current date
+    // Atomically increment the count for the current date (use a counter field)
     const counter = await AdminRegister.findOneAndUpdate(
       { date: dateString }, // Find document by today's date
       { $inc: { count: 1 } }, // Increment the `count` field
       { new: true, upsert: true } // Create a new document if it doesn't exist
     );
 
+    // Ensure the counter has a valid count (fallback to 0 if undefined)
+    const count = counter.count || 1; // Default to 1 if count is undefined
+
     // Generate the unique ID using the count
-    const uniqueId = `${dateString}${String(counter.count).padStart(3, '0')}`;
+    const uniqueId = `${dateString}${String(count).padStart(3, '0')}`;
 
     return uniqueId;
   } catch (error) {
@@ -62,6 +64,7 @@ const generateUniqueId = async () => {
     throw error;
   }
 };
+
 
 
 
