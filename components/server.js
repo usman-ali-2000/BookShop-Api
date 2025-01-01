@@ -47,7 +47,7 @@ const generateUniqueId = async () => {
 
     // Atomically increment the count for the current date (use a counter field)
     const counter = await AdminRegister.findOneAndUpdate(
-      { date: dateString }, // Find document by today's date
+      { generatedId: dateString }, // Find document by today's date
       { $inc: { count: 1 } }, // Increment the `count` field
       { new: true, upsert: true } // Create a new document if it doesn't exist
     );
