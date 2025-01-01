@@ -64,7 +64,7 @@ const generateUniqueId = async () => {
     }
 
     // Generate the unique ID with zero-padding for the count
-    const uniqueId = `${generatedIdPrefix}${String(count).padStart(3, '0')}`;
+    const uniqueId = `${generatedIdPrefix}${String(count)}`;
 
     return uniqueId;
   } catch (error) {
