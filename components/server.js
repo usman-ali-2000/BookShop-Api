@@ -56,7 +56,7 @@ const generateUniqueId = async () => {
     const count = counter.count || 1; // Default to 1 if count is undefined
 
     // Generate the unique ID using the count
-    const uniqueId = `${dateString}${String(count).padStart(3, '0')}`;
+    const uniqueId = `${dateString}${String(count)}`;
 
     return uniqueId;
   } catch (error) {
