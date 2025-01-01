@@ -45,7 +45,7 @@ const generateUniqueId = async () => {
     const date = new Date();
     const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD format
 
-    // Construct the generatedId before checking for existing ones
+    // Construct the generatedId prefix before checking for existing ones
     const generatedIdPrefix = `${dateString}`;
 
     // Check if the generatedId already exists in the database
@@ -53,25 +53,35 @@ const generateUniqueId = async () => {
 
     let count = 0;
 
-    // If document exists, get the current count value and increment
+    // If a document exists, get the current count value and increment it
     if (existingDoc) {
-      count = existingDoc.count + 1;
+      console.log('Existing document found:', existingDoc); // Debugging log
+      count = existingDoc.count + 1; // Increment the count
+      console.log('Incremented count:', count); // Debugging log
       await AdminRegister.updateOne({ generatedId: existingDoc.generatedId }, { $inc: { count: 1 } });
     } else {
       // If no document exists, create a new one and initialize count to 1
       count = 1;
+      console.log('No existing document, creating new with count:', count); // Debugging log
       await AdminRegister.create({ generatedId: generatedIdPrefix, count });
+    }
+
+    // Ensure count is a valid number
+    if (isNaN(count)) {
+      throw new Error("Count is not a valid number.");
     }
 
     // Generate the unique ID with zero-padding for the count
     const uniqueId = `${generatedIdPrefix}${String(count)}`;
 
+    console.log('Generated unique ID:', uniqueId); // Debugging log
     return uniqueId;
   } catch (error) {
     console.error("Error generating unique ID:", error);
     throw error;
   }
 };
+
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 9000); // 6-digit OTP
