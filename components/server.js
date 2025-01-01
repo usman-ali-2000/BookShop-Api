@@ -43,39 +43,39 @@ app.use(cors(corsOptions));
 const generateUniqueId = async () => {
   try {
     const date = new Date();
-    const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD format
+    const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // Format date to YYMMDD
 
-    // Construct the generatedId prefix before checking for existing ones
-    const generatedIdPrefix = `${dateString}`;
-
-    // Check if the generatedId already exists in the database
-    const existingDoc = await AdminRegister.findOne({ generatedId: new RegExp(`^${generatedIdPrefix}`) });
+    // Construct the generatedId prefix (YYMMDD)
+    const generatedIdPrefix = dateString;
 
     let count = 0;
 
-    // If a document exists, get the current count value and increment it
+    // Find or create the document for today's date
+    let existingDoc = await AdminRegister.findOne({ generatedId: generatedIdPrefix });
+    // If a document for today's date exists, get the current count and increment it
     if (existingDoc) {
-      console.log('Existing document found:', existingDoc); // Debugging log
-      count = existingDoc.count + 1; // Increment the count
-      console.log('Incremented count:', count); // Debugging log
-      await AdminRegister.updateOne({ generatedId: existingDoc.generatedId }, { $inc: { count: 1 } });
+      count = existingDoc.count + 1;
+      // Check if the generated ID already exists with the new incremented count
+      let generatedId = `${generatedIdPrefix}${String(count)}`;
+      let checkExistingId = await AdminRegister.findOne({ generatedId });
+      
+      while (checkExistingId) {
+        // If the generated ID exists, increment the count and check again
+        count++;
+        generatedId = `${generatedIdPrefix}${String(count)}`;
+        checkExistingId = await AdminRegister.findOne({ generatedId });
+      }
+      // After finding a unique ID, update the count in the document
+      await AdminRegister.updateOne({ generatedId: generatedIdPrefix }, { $set: { count: count } });
     } else {
       // If no document exists, create a new one and initialize count to 1
       count = 1;
-      console.log('No existing document, creating new with count:', count); // Debugging log
       await AdminRegister.create({ generatedId: generatedIdPrefix, count });
     }
-
-    // Ensure count is a valid number
-    if (isNaN(count)) {
-      throw new Error("Count is not a valid number.");
-    }
-
-    // Generate the unique ID with zero-padding for the count
+    // Generate the unique ID by concatenating date and count (with zero padding)
     const uniqueId = `${generatedIdPrefix}${String(count)}`;
-
-    console.log('Generated unique ID:', uniqueId); // Debugging log
     return uniqueId;
+
   } catch (error) {
     console.error("Error generating unique ID:", error);
     throw error;
