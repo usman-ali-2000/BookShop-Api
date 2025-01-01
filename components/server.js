@@ -45,18 +45,26 @@ const generateUniqueId = async () => {
     const date = new Date();
     const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD format
 
-    // Atomically increment the count for the current date (use a counter field)
-    const counter = await AdminRegister.findOneAndUpdate(
-      { generatedId: `${dateString}${String(count)}` }, // Find document by today's date
-      { $inc: { count: 1 } }, // Increment the `count` field
-      { new: true, upsert: true } // Create a new document if it doesn't exist
-    );
+    // Construct the generatedId before checking for existing ones
+    const generatedIdPrefix = `${dateString}`;
 
-    // Ensure the counter has a valid count (fallback to 0 if undefined)
-    const count = counter.count || 1; // Default to 1 if count is undefined
+    // Check if the generatedId already exists in the database
+    const existingDoc = await AdminRegister.findOne({ generatedId: new RegExp(`^${generatedIdPrefix}`) });
 
-    // Generate the unique ID using the count
-    const uniqueId = `${dateString}${String(count)}`;
+    let count = 0;
+
+    // If document exists, get the current count value and increment
+    if (existingDoc) {
+      count = existingDoc.count + 1;
+      await AdminRegister.updateOne({ generatedId: existingDoc.generatedId }, { $inc: { count: 1 } });
+    } else {
+      // If no document exists, create a new one and initialize count to 1
+      count = 1;
+      await AdminRegister.create({ generatedId: generatedIdPrefix, count });
+    }
+
+    // Generate the unique ID with zero-padding for the count
+    const uniqueId = `${generatedIdPrefix}${String(count).padStart(3, '0')}`;
 
     return uniqueId;
   } catch (error) {
@@ -64,10 +72,6 @@ const generateUniqueId = async () => {
     throw error;
   }
 };
-
-
-
-
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 9000); // 6-digit OTP
