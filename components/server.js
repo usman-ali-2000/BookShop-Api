@@ -45,35 +45,15 @@ const generateUniqueId = async () => {
     const date = new Date();
     const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // Format date to YYMMDD
 
-    // Construct the generatedId prefix (YYMMDD)
-    const generatedIdPrefix = dateString;
+    let count = 1; // Start with count 1
+    let uniqueId = `${dateString}${count}`; // Initial generated ID
 
-    let count = 0;
-
-    // Find or create the document for today's date
-    let existingDoc = await AdminRegister.findOne({ generatedId: generatedIdPrefix });
-    // If a document for today's date exists, get the current count and increment it
-    if (existingDoc) {
-      count = existingDoc.count + 1;
-      // Check if the generated ID already exists with the new incremented count
-      let generatedId = `${generatedIdPrefix}${String(count)}`;
-      let checkExistingId = await AdminRegister.findOne({ generatedId });
-      
-      while (checkExistingId) {
-        // If the generated ID exists, increment the count and check again
-        count++;
-        generatedId = `${generatedIdPrefix}${String(count)}`;
-        checkExistingId = await AdminRegister.findOne({ generatedId });
-      }
-      // After finding a unique ID, update the count in the document
-      await AdminRegister.updateOne({ generatedId: generatedIdPrefix }, { $set: { count: count } });
-    } else {
-      // If no document exists, create a new one and initialize count to 1
-      count = 1;
-      await AdminRegister.create({ generatedId: generatedIdPrefix, count });
+    // Use a loop to check if the generatedId already exists
+    while (await AdminRegister.findOne({ generatedId: uniqueId })) {
+      count++; // Increment the count
+      uniqueId = `${dateString}${count}`; // Generate a new ID with the updated count
     }
-    // Generate the unique ID by concatenating date and count (with zero padding)
-    const uniqueId = `${generatedIdPrefix}${String(count)}`;
+
     return uniqueId;
 
   } catch (error) {
