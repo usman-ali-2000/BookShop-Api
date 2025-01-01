@@ -462,6 +462,22 @@ app.get('/register/:id', async (req, res) => {
   }
 });
 
+app.delete("/register/:id", async (req, res) => {
+  try {
+
+    const registerDel = await AdminRegister.findByIdAndDelete(req.params.id);
+
+    if (!registerDel) {
+      return res.status(404).send("Data not found");
+    }
+
+    if (!req.params.id) {
+      res.status(201).send();
+    }
+  } catch (e) {
+    res.status(400).send(e);
+  }
+})
 //update Register
 app.patch("/register/:email", async (req, res) => {
   try {
