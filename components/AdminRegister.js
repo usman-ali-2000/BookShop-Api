@@ -12,7 +12,7 @@ const adminSchema = new mongoose.Schema({
     },
     generatedId: {
         type: String,
-        unique: true, // Ensure this field is unique
+        unique: true
     },
     userId: {
         type: String,
@@ -48,7 +48,7 @@ const adminSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    accType:{
+    accType: {
         type: String,
         default: "fresh"
     },
@@ -58,23 +58,9 @@ const adminSchema = new mongoose.Schema({
     }
 });
 
-// Middleware to generate a unique ID
-adminSchema.pre("save", async function (next) {
-    if (!this.generatedId) {
-        const date = new Date();
-        const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
-
-        // Use a counter collection or generate a random number as fallback
-        const counter = await AdminRegister.countDocuments({ date: dateString });
-
-        // Assign unique ID
-        this.generatedId = `${dateString}${counter + 1}`;
-    }
-    next();
-});
-
 // Define the model
-const AdminRegister = mongoose.model('AdminRegister', adminSchema);
+const AdminRegister = mongoose.model('adminSchema', adminSchema);
 
 // Export the model
 module.exports = AdminRegister;
+

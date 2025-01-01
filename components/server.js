@@ -42,21 +42,27 @@ app.use(cors(corsOptions));
 
 
 const generateUniqueId = async () => {
-  const date = new Date();
-  const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
+  try {
+    const date = new Date();
+    const dateString = date.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD format
 
-  // Use a counter collection to atomically increment the count
-  const counter = await AdminRegister.findOneAndUpdate(
-    { date: dateString },
-    { $inc: { count: 1 } },
-    { new: true, upsert: true }
-  );
+    // Atomically increment the count for the current date
+    const counter = await AdminRegister.findOneAndUpdate(
+      { date: dateString }, // Find document by today's date
+      { $inc: { count: 1 } }, // Increment the `count` field
+      { new: true, upsert: true } // Create a new document if it doesn't exist
+    );
 
-  // Generate the unique ID
-  const uniqueId = `${dateString}${counter.count}`;
+    // Generate the unique ID using the count
+    const uniqueId = `${dateString}${String(counter.count).padStart(3, '0')}`;
 
-  return uniqueId;
+    return uniqueId;
+  } catch (error) {
+    console.error("Error generating unique ID:", error);
+    throw error;
+  }
 };
+
 
 
 
@@ -743,6 +749,7 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ msg: 'Email already exists' });
     }
 
+    const generatedId = await generateUniqueId();
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -753,6 +760,7 @@ app.post("/register", async (req, res) => {
       name,
       phone,
       email,
+      generatedId: generatedId.toString(),
       userId,
       password: hashedPassword,
     });
