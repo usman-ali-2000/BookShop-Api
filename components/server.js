@@ -688,7 +688,7 @@ app.patch('/add-nfuc', async (req, res) => {
     try {
       // Increment coins for the receiver
       const receiverUpdate = await AdminRegister.findOneAndUpdate(
-        { generatedId: receiverId },
+        { _id: receiverId },
         { $inc: { nfuc: amount } },
         { new: true, session } // Use the session
       );
@@ -710,7 +710,6 @@ app.patch('/add-nfuc', async (req, res) => {
 
       res.json({
         message: `Transfer successful ${senderId}, ${receiverId}`,
-        sender: senderUpdate,
         receiver: receiverUpdate,
       });
 
