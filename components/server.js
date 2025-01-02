@@ -456,6 +456,17 @@ app.get('/register/:id', async (req, res) => {
   }
 });
 
+app.get('/register/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const adminId = await AdminRegister.findOne({ userId: userId });
+    res.json(adminId);
+  } catch (error) {
+    console.error('Error fetching farm', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 app.delete("/register/:id", async (req, res) => {
   try {
 
