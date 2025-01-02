@@ -15,6 +15,9 @@ const TransHistorySchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    address: {
+        type: String,
+    },
     pending: {
         type: Boolean,
         default: true

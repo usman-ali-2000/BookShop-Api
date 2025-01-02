@@ -710,8 +710,6 @@ app.patch('/transfer-nfuc', async (req, res) => {
       if (!receiverUpdate) {
         throw new Error('Receiver with the given ID not found');
       }
-
-
       // Create transaction history record
       const newTrans = new TransHistory({
         sender: senderId,
@@ -1153,11 +1151,12 @@ app.get('/withdraw', async (req, res) => {
 
 app.post('/transhistory', async (req, res) => {
   try {
-    const { sender, receiver, usdt } = req.body;
+    const { sender, receiver, usdt, address } = req.body;
     const newTrans = new TransHistory({
       sender: sender,
       receiver: receiver,
       usdt: usdt,
+      address: address,
     });
     await newTrans.save();
     res.status(201).json(newTrans);
