@@ -1083,7 +1083,7 @@ app.patch("/plot/:id", async (req, res) => {
 // GET all ScreenShots
 app.get('/screenshot', async (req, res) => {
   try {
-    const screenshot = await ScreenShot.find();
+    const screenshot = await ScreenShot.find().sort({ _id: -1 });
     res.json(screenshot);
   } catch (error) {
     console.error('Error fetching screenshot', error);
