@@ -456,7 +456,7 @@ app.get('/register/:id', async (req, res) => {
   }
 });
 
-app.get('/register/:userId', async (req, res) => {
+app.get('/user-register/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const adminId = await AdminRegister.find({ userId: userId });
