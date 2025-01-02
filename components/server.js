@@ -538,6 +538,44 @@ app.patch('/register/:id/add-coins', async (req, res) => {
   }
 });
 
+
+app.patch('/register/:userId/minus-usdt', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: 'Invalid amount provided' });
+    }
+
+    // Find user by ID
+    const user = await AdminRegister.findOne({ generatedId: userId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if the user has sufficient USDT
+    if (user.usdt < amount) {
+      return res.status(400).json({ message: 'Insufficient USDT balance' });
+    }
+
+    // Deduct the amount
+    user.usdt -= amount;
+
+    // Save the updated user record
+    await user.save();
+
+    res.status(200).json({
+      message: 'USDT deducted successfully',
+      balance: user.usdt,
+    });
+  } catch (error) {
+    console.error('Error deducting USDT:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 app.patch('/register/:id/add-nfuc', async (req, res) => {
   const _id = req.params.id;
   const { additionalCoins, accType } = req.body;
