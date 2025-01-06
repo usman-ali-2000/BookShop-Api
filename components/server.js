@@ -699,6 +699,41 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
   }
 });
 
+app.patch('/register/dollarToNfuc/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { coins, amount } = req.body;
+
+    // Find the user by ID
+    const userData = await AdminRegister.findById(id);
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if the amount is less than or equal to the user's current USDT balance
+    if (amount <= userData.usdt) {
+      // Update the user's nfuc and usdt balances
+      const updatedUser = await AdminRegister.findByIdAndUpdate(
+        id,
+        {
+          $inc: { nfuc: coins, usdt: -amount }, // Increment nfuc and decrement usdt
+        },
+        { new: true } // Return the updated document
+      );
+
+      // Return the updated user data
+      return res.json(updatedUser);
+    } else {
+      return res.status(400).json({ error: 'Insufficient USDT balance' });
+    }
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 app.get('/transhistory/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -907,227 +942,227 @@ app.get('/register', async (req, res) => {
 });
 
 // GET farm by id
-app.get('/farm/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const farmId = await Farm.findById(id);
-    res.json(farmId);
-  } catch (error) {
-    console.error('Error fetching farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/farm/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const farmId = await Farm.findById(id);
+//     res.json(farmId);
+//   } catch (error) {
+//     console.error('Error fetching farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// GET farm by email
-app.get('/farm/email/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const farms = await Farm.find({ email: email });
-    res.json(farms);
-  } catch (error) {
-    console.error('Error fetching farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // GET farm by email
+// app.get('/farm/email/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const farms = await Farm.find({ email: email });
+//     res.json(farms);
+//   } catch (error) {
+//     console.error('Error fetching farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// POST create farm
-app.post('/farm', async (req, res) => {
-  try {
-    const { email, farm, date } = req.body;
-    const newFarm = new Farm({ email, farm, date });
-    await newFarm.save();
-    res.status(201).json(newFarm);
-  } catch (error) {
-    console.error('Error creating farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // POST create farm
+// app.post('/farm', async (req, res) => {
+//   try {
+//     const { email, farm, date } = req.body;
+//     const newFarm = new Farm({ email, farm, date });
+//     await newFarm.save();
+//     res.status(201).json(newFarm);
+//   } catch (error) {
+//     console.error('Error creating farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 //update Farm
-app.patch("/farm/:id", async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const updateFarm = await Farm.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updateFarm);
-  }
-  catch (e) {
-    res.status(400).send(e);
-  }
-});
+// app.patch("/farm/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updateFarm = await Farm.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updateFarm);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
 
-// DELETE farm
-app.delete('/farm/:id', async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const user = await Farm.findByIdAndDelete(req.params.id);
+// // DELETE farm
+// app.delete('/farm/:id', async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const user = await Farm.findByIdAndDelete(req.params.id);
 
-    if (!user) {
-      return res.status(404).send("Data not found");
-    }
+//     if (!user) {
+//       return res.status(404).send("Data not found");
+//     }
 
-    if (!req.params.id) {
-      res.status(201).send();
-    }
-  } catch (e) {
-    res.status(400).send(e);
-  }
-})
+//     if (!req.params.id) {
+//       res.status(201).send();
+//     }
+//   } catch (e) {
+//     res.status(400).send(e);
+//   }
+// })
 
-app.delete('/farm', async (req, res) => {
-  try {
-    const { farm } = req.body;
-    const deletedFarm = await Farm.findOneAndDelete(farm);
-    if (!deletedFarm) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting farm', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.delete('/farm', async (req, res) => {
+//   try {
+//     const { farm } = req.body;
+//     const deletedFarm = await Farm.findOneAndDelete(farm);
+//     if (!deletedFarm) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting farm', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.get('/variety', async (req, res) => {
-  try {
-    const varieties = await Variety.find();
-    res.json(varieties);
-  } catch (error) {
-    console.error('Error fetching varieties', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/variety', async (req, res) => {
+//   try {
+//     const varieties = await Variety.find();
+//     res.json(varieties);
+//   } catch (error) {
+//     console.error('Error fetching varieties', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// GET variety by email
-app.get('/variety/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const varieties = await Variety.find({ email: email });
-    res.json(varieties);
-  } catch (error) {
-    console.error('Error fetching variety', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // GET variety by email
+// app.get('/variety/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const varieties = await Variety.find({ email: email });
+//     res.json(varieties);
+//   } catch (error) {
+//     console.error('Error fetching variety', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// POST create variety
-app.post('/variety', async (req, res) => {
-  try {
-    const { email, variety, date } = req.body;
-    const newVariety = new Variety({ email, variety, date });
-    await newVariety.save();
-    res.status(201).json(newVariety);
-  } catch (error) {
-    console.error('Error creating variety', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // POST create variety
+// app.post('/variety', async (req, res) => {
+//   try {
+//     const { email, variety, date } = req.body;
+//     const newVariety = new Variety({ email, variety, date });
+//     await newVariety.save();
+//     res.status(201).json(newVariety);
+//   } catch (error) {
+//     console.error('Error creating variety', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// DELETE variety
-app.delete('/variety/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedVariety = await Variety.findByIdAndDelete(id);
-    if (!deletedVariety) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting variety', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // DELETE variety
+// app.delete('/variety/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedVariety = await Variety.findByIdAndDelete(id);
+//     if (!deletedVariety) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting variety', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-//update variety
-app.patch("/variety/:id", async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const updateVariety = await Variety.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updateVariety);
-  }
-  catch (e) {
-    res.status(400).send(e);
-  }
-});
+// //update variety
+// app.patch("/variety/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updateVariety = await Variety.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updateVariety);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
 
-app.get('/plot', async (req, res) => {
-  try {
-    const plots = await Plot.find();
-    res.json(plots);
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/plot', async (req, res) => {
+//   try {
+//     const plots = await Plot.find();
+//     res.json(plots);
+//   } catch (error) {
+//     console.error('Error executing query', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.get('/plot/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const plots = await Plot.find({ email: email });
-    res.json(plots);
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/plot/:email', async (req, res) => {
+//   try {
+//     const { email } = req.params;
+//     const plots = await Plot.find({ email: email });
+//     res.json(plots);
+//   } catch (error) {
+//     console.error('Error executing query', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.get('/plot/:email/:farm/:block/:plot', async (req, res) => {
-  try {
-    const { email, farm, block, plot } = req.params;
-    const plots = await Plot.findOne({ email: email, farm: farm, block: block, plot: plot });
-    res.json(plot);
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.get('/plot/:email/:farm/:block/:plot', async (req, res) => {
+//   try {
+//     const { email, farm, block, plot } = req.params;
+//     const plots = await Plot.findOne({ email: email, farm: farm, block: block, plot: plot });
+//     res.json(plot);
+//   } catch (error) {
+//     console.error('Error executing query', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-app.post('/plot', async (req, res) => {
-  try {
-    const { farm, block, plot, area, season, rowspace, variety, email, date } = req.body;
-    const newPlot = new Plot({ farm, block, plot, area, season, rowspace, variety, email, date });
-    await newPlot.save();
-    res.json(newPlot);
-  } catch (error) {
-    console.error('Error executing query', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// app.post('/plot', async (req, res) => {
+//   try {
+//     const { farm, block, plot, area, season, rowspace, variety, email, date } = req.body;
+//     const newPlot = new Plot({ farm, block, plot, area, season, rowspace, variety, email, date });
+//     await newPlot.save();
+//     res.json(newPlot);
+//   } catch (error) {
+//     console.error('Error executing query', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// DELETE plot
-app.delete('/plot/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedPlot = await Plot.findByIdAndDelete(id);
-    if (!deletedPlot) {
-      res.status(404).json({ message: 'Record not found' });
-    } else {
-      res.json({ message: 'Record deleted successfully' });
-    }
-  } catch (error) {
-    console.error('Error deleting variety', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// // DELETE plot
+// app.delete('/plot/:id', async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const deletedPlot = await Plot.findByIdAndDelete(id);
+//     if (!deletedPlot) {
+//       res.status(404).json({ message: 'Record not found' });
+//     } else {
+//       res.json({ message: 'Record deleted successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error deleting variety', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
-// Update job
-app.patch("/plot/:id", async (req, res) => {
-  try {
-    const _id = req.params.id;
-    const updatePlot = await Plot.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updatePlot);
-  }
-  catch (e) {
-    res.status(400).send(e);
-  }
-});
+// // Update job
+// app.patch("/plot/:id", async (req, res) => {
+//   try {
+//     const _id = req.params.id;
+//     const updatePlot = await Plot.findByIdAndUpdate(_id, req.body, {
+//       new: true
+//     });
+//     res.send(updatePlot);
+//   }
+//   catch (e) {
+//     res.status(400).send(e);
+//   }
+// });
 
 // GET all ScreenShots
 app.get('/screenshot', async (req, res) => {
@@ -1218,6 +1253,7 @@ app.post('/transhistory', async (req, res) => {
 app.patch("/transhistory/:id", async (req, res) => {
   try {
     const _id = req.params.id;
+
     const updatetranshistory = await TransHistory.findByIdAndUpdate(_id, req.body, {
       new: true
     });
