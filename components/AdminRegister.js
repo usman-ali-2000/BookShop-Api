@@ -9,6 +9,7 @@ const adminSchema = new mongoose.Schema({
     },
     email: {
         type: String,
+        unique: true
     },
     generatedId: {
         type: String,
