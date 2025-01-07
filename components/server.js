@@ -702,8 +702,11 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
 app.patch('/register/dollarToNfuc/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { coins, amount } = req.body;
+    const { coins, amount, accType, referId } = req.body;
 
+    if (!coins || !amount || !accType) {
+
+    }
     // Find the user by ID
     const userData = await AdminRegister.findById(id);
 
@@ -711,7 +714,6 @@ app.patch('/register/dollarToNfuc/:id', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Check if the amount is less than or equal to the user's current USDT balance
     if (amount <= userData.usdt) {
       // Update the user's nfuc and usdt balances
       const updatedUser = await AdminRegister.findByIdAndUpdate(
@@ -722,8 +724,24 @@ app.patch('/register/dollarToNfuc/:id', async (req, res) => {
         { new: true } // Return the updated document
       );
 
+      const incrementValue = accType === 'working'
+        ? coins * 7 / 100
+        : accType === 'non-working'
+          ? coins * 4 / 100
+          : null;
+
+      if (incrementValue === null || !referId) {
+        throw new Error('Invalid account type');
+      }
+
+      const result = await AdminRegister.findOneAndUpdate(
+        { generatedId: referId },
+        { $inc: { nfucRefer: incrementValue } },
+        { new: true }
+      );
+
       // Return the updated user data
-      return res.json(updatedUser);
+      return res.json(updatedUser, result);
     } else {
       return res.status(400).json({ error: 'Insufficient USDT balance' });
     }
@@ -764,12 +782,14 @@ app.patch('/transfer-nfuc', async (req, res) => {
   }
 
   try {
+
     // Start a transaction-like process
     const session = await AdminRegister.startSession();
     session.startTransaction();
 
     try {
-      // Decrement coins from the sender
+      // Decrement coins from
+      //  the sender
       const senderUpdate = await AdminRegister.findOneAndUpdate(
         { generatedId: senderId },
         { $inc: { nfuc: -amount } },
