@@ -730,17 +730,19 @@ app.patch('/register/dollarToNfuc/:id', async (req, res) => {
           ? coins * 4 / 100
           : null;
 
-      if (incrementValue === null || !referId) {
+      if (incrementValue === null) {
         throw new Error('Invalid account type');
       }
 
-      const result = await AdminRegister.findOneAndUpdate(
-        { generatedId: referId },
-        { $inc: { nfucRefer: incrementValue } },
-        { new: true }
-      );
+      if (referId) {
+        const result = await AdminRegister.findOneAndUpdate(
+          { generatedId: referId },
+          { $inc: { nfucRefer: incrementValue } },
+          { new: true }
+        );
+      }
 
-      return res.json({ updatedUser, referResult: result });
+      return res.json({ updatedUser });
 
     } else {
       return res.status(400).json({ error: 'Insufficient USDT balance' });
