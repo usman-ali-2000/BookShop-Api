@@ -740,8 +740,8 @@ app.patch('/register/dollarToNfuc/:id', async (req, res) => {
         { new: true }
       );
 
-      // Return the updated user data
-      return res.json(updatedUser, result);
+      return res.json({ updatedUser, referResult: result });
+
     } else {
       return res.status(400).json({ error: 'Insufficient USDT balance' });
     }
