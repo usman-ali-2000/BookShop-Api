@@ -5,10 +5,6 @@ const ScreenShotSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    image2: {
-        type: String,
-        required: true
-    },
     payerId: {
         type: String,
         required: true
@@ -16,17 +12,9 @@ const ScreenShotSchema = new mongoose.Schema({
     referId: {
         type: String,
     },
-    coins: {
-        type: Number,
-        default: 0
-    },
     price: {
         type: Number,
         default: 0
-    },
-    type: {
-        type: String,
-        default: "fresh"
     },
     verify: {
         type: Boolean,
