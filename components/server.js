@@ -509,6 +509,46 @@ app.patch("/register/:email", async (req, res) => {
   }
 });
 
+app.patch('/register/:id/send-usdt', async (req, res) => {
+  const _id = req.params.id;
+  const { amount, ssId } = req.body;
+
+  if (typeof amount !== 'number') {
+    return res.status(400).json({ error: 'amount must be a number' });
+  }
+
+  try {
+    const result = await AdminRegister.findByIdAndUpdate(
+      _id,
+      { $inc: { usdt: amount } },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({ error: 'Admin with the given ID not found' });
+    }
+
+    const updateScreenshot = await ScreenShot.findByIdAndUpdate(
+      ssId,
+      { verify: true },
+      { new: true }
+    );
+
+    if (!updateScreenshot) {
+      return res.status(404).json({ error: 'Screenshot with the given ID not found' });
+    }
+
+    res.json({
+      message: 'USDT added successfully',
+      updatedAdmin: result,
+      updatedScreenshot: updateScreenshot,
+    });
+  } catch (error) {
+    console.error('Error adding USDT:', error);
+    res.status(500).json({ error: 'An error occurred while adding USDT' });
+  }
+});
+
 
 // PATCH route to add coins to an admin's existing coin balance
 
@@ -1243,10 +1283,10 @@ app.patch("/screenshot/:id", async (req, res) => {
     if (find.scam) {
       return res.status(402).send({ error: "Cannot perform action" });
     }
-      const updatescreenshot = await ScreenShot.findByIdAndUpdate(_id, req.body, {
-        new: true
-      });
-      res.send(updatescreenshot);
+    const updatescreenshot = await ScreenShot.findByIdAndUpdate(_id, req.body, {
+      new: true
+    });
+    res.send(updatescreenshot);
   }
   catch (e) {
     res.status(400).send(e);
