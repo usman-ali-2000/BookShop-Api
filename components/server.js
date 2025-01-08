@@ -897,6 +897,25 @@ app.patch('/transfer-nfuc', async (req, res) => {
 
 
 
+app.post("/admin-login", async (req, res) => {
+
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ msg: 'Please enter all fields' });
+    }
+
+    if (email === 'adminwingedx@gmail.com' && password === 'nfuc@5673#') {
+      res.status(200).json({ success: 'login successfull' });
+    } else {
+      return res.status(400).json({ msg: 'Invalid credentials' });
+    }
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
 app.post("/register", async (req, res) => {
   try {
     console.log('Received request body:', req.body);
@@ -945,6 +964,7 @@ app.post("/register", async (req, res) => {
     res.status(500).json({ msg: 'Server error. Please try again later.' });
   }
 });
+
 
 
 app.post("/login", async (req, res) => {
@@ -1263,7 +1283,24 @@ app.post('/screenshot', async (req, res) => {
   }
 });
 
+app.get('/screenshot/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const findScreenshot = await ScreenShot.findById(id);
+    if (!findScreenshot) {
+      res.status(404).json({ message: 'screenshot not found' });
+    } else {
+      res.json({ message: 'screenshot found successfully' });
+    }
+  } catch (error) {
+    console.error('Error finding screenshot', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 // DELETE screenshot
+
 app.delete('/screenshot/:id', async (req, res) => {
   try {
     const { id } = req.params;
