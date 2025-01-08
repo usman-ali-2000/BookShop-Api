@@ -1290,7 +1290,7 @@ app.get('/screenshot/:id', async (req, res) => {
     if (!findScreenshot) {
       res.status(404).json({ message: 'screenshot not found' });
     } else {
-      res.json({ message: 'screenshot found successfully' });
+      res.json(findScreenshot);
     }
   } catch (error) {
     console.error('Error finding screenshot', error);
