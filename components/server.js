@@ -1240,12 +1240,13 @@ app.patch("/screenshot/:id", async (req, res) => {
       return res.status(404).send({ error: "Screenshot not found" });
     }
 
-    if (!find.scam) {
+    if (find.scam) {
+      return res.status(402).send({ error: "Cannot perform action" });
+    }
       const updatescreenshot = await ScreenShot.findByIdAndUpdate(_id, req.body, {
         new: true
       });
       res.send(updatescreenshot);
-    }
   }
   catch (e) {
     res.status(400).send(e);
