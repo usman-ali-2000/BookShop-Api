@@ -514,7 +514,7 @@ app.patch('/register/:id/send-usdt', async (req, res) => {
   const { amount, ssId } = req.body;
 
 
-  let find = await ScreenShot.findById(_id);
+  let find = await ScreenShot.findById(ssId);
 
   if (find.scam || find.verify) {
     return res.status(400).json({ error: 'cannot perform action' });
