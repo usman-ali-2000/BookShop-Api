@@ -513,6 +513,14 @@ app.patch('/register/:id/send-usdt', async (req, res) => {
   const _id = req.params.id;
   const { amount, ssId } = req.body;
 
+
+  let find = await ScreenShot.findById(_id);
+
+  if (find.scam || find.verify) {
+    return res.status(400).json({ error: 'cannot perform action' });
+  }
+
+
   if (typeof amount !== 'number') {
     return res.status(400).json({ error: 'amount must be a number' });
   }
