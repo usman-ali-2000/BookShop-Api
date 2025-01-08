@@ -1200,13 +1200,13 @@ app.get('/screenshot', async (req, res) => {
 // POST create screenshot
 app.post('/screenshot', async (req, res) => {
   try {
-    const { image1, payerId, referId, price, verify } = req.body;
+    const { image1, payerId, referId, price, verify, scam } = req.body;
 
     if (!image1) {
       return res.status(400).json({ error: 'screenshot and image URL are required.' });
     }
 
-    const newScreenShot = new ScreenShot({ image1, payerId, referId, price, verify });
+    const newScreenShot = new ScreenShot({ image1, payerId, referId, price, verify, scam });
     await newScreenShot.save();
     res.status(201).json(newScreenShot);
   } catch (error) {
