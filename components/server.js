@@ -1234,10 +1234,18 @@ app.delete('/screenshot/:id', async (req, res) => {
 app.patch("/screenshot/:id", async (req, res) => {
   try {
     const _id = req.params.id;
-    const updatescreenshot = await ScreenShot.findByIdAndUpdate(_id, req.body, {
-      new: true
-    });
-    res.send(updatescreenshot);
+    let find = await ScreenShot.findById(_id);
+
+    if (!find) {
+      return res.status(404).send({ error: "Screenshot not found" });
+    }
+
+    if (!find.scam) {
+      const updatescreenshot = await ScreenShot.findByIdAndUpdate(_id, req.body, {
+        new: true
+      });
+      res.send(updatescreenshot);
+    }
   }
   catch (e) {
     res.status(400).send(e);
