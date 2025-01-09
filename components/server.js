@@ -938,7 +938,7 @@ app.post("/register", async (req, res) => {
 
     // Validation: Ensure all required fields are provided
 
-    if (!name || !phone || !email || !password) {
+    if (!name || !email || !password) {
       return res.status(400).json({ msg: 'All fields are mandatory' });
     }
 
@@ -957,7 +957,6 @@ app.post("/register", async (req, res) => {
     // Create a new user and save to the database
     const user = new AdminRegister({
       name,
-      phone,
       email,
       generatedId: generatedId.toString(),
       userId,
