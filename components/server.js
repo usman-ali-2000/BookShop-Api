@@ -934,7 +934,7 @@ app.post("/admin-login", async (req, res) => {
 app.post("/register", async (req, res) => {
   try {
     console.log('Received request body:', req.body);
-    const { email, name, phone, userId, password } = req.body;
+    const { email, name, userId, password } = req.body;
 
     // Validation: Ensure all required fields are provided
 
@@ -968,7 +968,6 @@ app.post("/register", async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      phone: user.phone,
     });
 
     console.log('User registered successfully:', user);
