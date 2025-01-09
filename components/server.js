@@ -978,8 +978,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-
-
 app.post("/login", async (req, res) => {
 
   try {
@@ -1364,12 +1362,13 @@ app.get('/withdraw', async (req, res) => {
 
 app.post('/transhistory', async (req, res) => {
   try {
-    const { sender, receiver, usdt, address } = req.body;
+    const { sender, receiver, usdt, address, account } = req.body;
     const newTrans = new TransHistory({
       sender: sender,
       receiver: receiver,
       usdt: usdt,
       address: address,
+      account: account,
     });
     await newTrans.save();
     res.status(201).json(newTrans);

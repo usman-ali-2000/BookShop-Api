@@ -22,6 +22,9 @@ const TransHistorySchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    account: {
+        type: String,
+    },
     timestamp: {
         type: Date,
         default: Date.now
