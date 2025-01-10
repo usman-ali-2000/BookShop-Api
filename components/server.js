@@ -27,6 +27,7 @@ const ScreenShot = require('./ScreenShot');
 const TransHistory = require('./TransHistory');
 const Notification = require('./Notification');
 const Withdraw = require('./Withdraw');
+const Calculation = require('./Calculation');
 
 const PORT = process.env.PORT || 8000;
 
@@ -366,6 +367,32 @@ app.get('/tasks', async (req, res) => {
   }
 });
 
+
+app.post('/calculation', async (req, res) => {
+  const { soldNfuc, usdt, withdrawUsdt } = req.body;
+
+  try {
+    const newCalc = new Calculation({
+      soldNfuc,
+      usdt,
+      withdrawUsdt,
+    });
+
+    const savedCalc = await newCalc.save();
+    res.status(201).json({ message: 'Calculation created successfully', post: savedCalc });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create Calculation' });
+  }
+});
+app.get('/calculation', async (req, res) => {
+  try {
+    const get = await Calculation.find();
+
+    res.status(200).json({ get });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create Calculation' });
+  }
+});
 
 app.post('/task', async (req, res) => {
   const { link, heading, subHeading } = req.body;
@@ -763,19 +790,18 @@ app.patch('/register/dollarToNfuc/:id', async (req, res) => {
     }
 
     if (amount <= userData.usdt) {
-      // Update the user's nfuc and usdt balances
       const updatedUser = await AdminRegister.findByIdAndUpdate(
         id,
         {
-          $inc: { nfuc: coins, usdt: -amount }, // Increment nfuc and decrement usdt
+          $inc: { nfuc: coins, usdt: -amount },
         },
-        { new: true } // Return the updated document
+        { new: true }
       );
 
       const incrementValue = accType === 'working'
-        ? coins * 7 / 100
+        ? amount * 10 / 100
         : accType === 'non-working'
-          ? coins * 4 / 100
+          ? amount * 4 / 100
           : null;
 
       if (incrementValue === null) {

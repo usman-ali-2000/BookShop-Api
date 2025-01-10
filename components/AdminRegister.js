@@ -45,6 +45,10 @@ const adminSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    usdtRefer: {
+        type: Number,
+        default: 0
+    },
     usdt: {
         type: Number,
         default: 0
