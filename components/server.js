@@ -643,43 +643,76 @@ app.patch('/register/:id/add-coins', async (req, res) => {
   }
 });
 
-
 app.patch('/register/:userId/minus-usdt', async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
+    session.startTransaction();
+
     const { userId } = req.params;
     const { amount } = req.body;
 
+    // Validate input
     if (!amount || amount <= 0) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ message: 'Invalid amount provided' });
     }
 
     // Find user by ID
-    const user = await AdminRegister.findOne({ generatedId: userId });
+    const user = await AdminRegister.findOne({ generatedId: userId }).session(session);
 
     if (!user) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: 'User not found' });
     }
 
     // Check if the user has sufficient USDT
     if (user.usdt < amount) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ message: 'Insufficient USDT balance' });
     }
 
-    // Deduct the amount
+    // Deduct USDT from the user's balance
     user.usdt -= amount;
 
+    // Update Calculation document
+    const calcId = '6780be42a1acd6dfa643a3f6';
+    const updateCalc = await Calculation.findByIdAndUpdate(
+      calcId,
+      { $inc: { withdrawUsdt: amount } },
+      { new: true, session }
+    );
+
+    if (!updateCalc) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: 'Calculation record not found' });
+    }
+
     // Save the updated user record
-    await user.save();
+    await user.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(200).json({
       message: 'USDT deducted successfully',
       balance: user.usdt,
     });
   } catch (error) {
+    // Rollback transaction in case of an error
+    await session.abortTransaction();
+    session.endSession();
+
     console.error('Error deducting USDT:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 app.patch('/register/:id/add-nfuc', async (req, res) => {
   const _id = req.params.id;
