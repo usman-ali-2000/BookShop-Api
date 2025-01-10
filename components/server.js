@@ -537,52 +537,82 @@ app.patch("/register/:email", async (req, res) => {
 });
 
 app.patch('/register/:id/send-usdt', async (req, res) => {
-  const _id = req.params.id;
-  const { amount, ssId } = req.body;
-
-
-  let find = await ScreenShot.findById(ssId);
-
-  if (find.scam || find.verify) {
-    return res.status(400).json({ error: 'cannot perform action' });
-  }
-
-
-  if (typeof amount !== 'number') {
-    return res.status(400).json({ error: 'amount must be a number' });
-  }
+  const session = await mongoose.startSession();
 
   try {
+    session.startTransaction();
+
+    const _id = req.params.id;
+    const { amount, ssId } = req.body;
+
+    // Validate input
+    const find = await ScreenShot.findById(ssId).session(session);
+    if (find.scam || find.verify) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Cannot perform action' });
+    }
+
+    if (typeof amount !== 'number') {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Amount must be a number' });
+    }
+
+    // Update admin's USDT
     const result = await AdminRegister.findByIdAndUpdate(
       _id,
       { $inc: { usdt: amount } },
-      { new: true }
+      { new: true, session }
     );
 
     if (!result) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: 'Admin with the given ID not found' });
     }
 
+    // Update calculation data
+    const calcId = '6780be42a1acd6dfa643a3f6';
+    const updateCalc = await Calculation.findByIdAndUpdate(
+      calcId,
+      { $inc: { usdt: amount } },
+      { new: true, session }
+    );
+
+    // Update screenshot verification
     const updateScreenshot = await ScreenShot.findByIdAndUpdate(
       ssId,
       { verify: true },
-      { new: true }
+      { new: true, session }
     );
 
     if (!updateScreenshot) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: 'Screenshot with the given ID not found' });
     }
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
 
     res.json({
       message: 'USDT added successfully',
       updatedAdmin: result,
+      updatedCalculation: updateCalc,
       updatedScreenshot: updateScreenshot,
     });
   } catch (error) {
+    // Rollback transaction in case of an error
+    await session.abortTransaction();
+    session.endSession();
+
     console.error('Error adding USDT:', error);
     res.status(500).json({ error: 'An error occurred while adding USDT' });
   }
 });
+
 
 
 // PATCH route to add coins to an admin's existing coin balance
@@ -806,7 +836,7 @@ app.patch('/register/dollarToNfuc/:id', async (req, res) => {
       const calcId = '6780be42a1acd6dfa643a3f6';
       const updateCalc = await Calculation.findByIdAndUpdate(
         calcId,
-        { $inc: { soldNfuc: coins, usdt: amount } },
+        { $inc: { soldNfuc: coins } },
         { new: true, session }
       );
 
@@ -815,8 +845,8 @@ app.patch('/register/dollarToNfuc/:id', async (req, res) => {
         accType === 'working'
           ? (amount * 10) / 100
           : accType === 'non-working'
-          ? (amount * 4) / 100
-          : null;
+            ? (amount * 4) / 100
+            : null;
 
       if (incrementValue === null) {
         throw new Error('Invalid account type');
