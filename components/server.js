@@ -775,57 +775,80 @@ app.patch('/register/generated/:generatedId/refer-nfuc', async (req, res) => {
 });
 
 app.patch('/register/dollarToNfuc/:id', async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
+    session.startTransaction();
+
     const { id } = req.params;
     const { coins, amount, accType, referId } = req.body;
 
     if (!coins || !amount || !accType) {
-
+      return res.status(400).json({ error: 'Missing required fields' });
     }
+
     // Find the user by ID
-    const userData = await AdminRegister.findById(id);
+    const userData = await AdminRegister.findById(id).session(session);
 
     if (!userData) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     if (amount <= userData.usdt) {
+      // Update user's NFUC and USDT balances
       const updatedUser = await AdminRegister.findByIdAndUpdate(
         id,
-        {
-          $inc: { nfuc: coins, usdt: -amount },
-        },
-        { new: true }
+        { $inc: { nfuc: coins, usdt: -amount } },
+        { new: true, session }
       );
 
-      const incrementValue = accType === 'working'
-        ? amount * 10 / 100
-        : accType === 'non-working'
-          ? amount * 4 / 100
+      // Update calculation object
+      const calcId = '6780be42a1acd6dfa643a3f6';
+      const updateCalc = await Calculation.findByIdAndUpdate(
+        calcId,
+        { $inc: { soldNfuc: coins, usdt: amount } },
+        { new: true, session }
+      );
+
+      // Calculate referral bonus
+      const incrementValue =
+        accType === 'working'
+          ? (amount * 10) / 100
+          : accType === 'non-working'
+          ? (amount * 4) / 100
           : null;
 
       if (incrementValue === null) {
         throw new Error('Invalid account type');
       }
 
+      // Update referral bonus if `referId` is provided
       if (referId) {
         const result = await AdminRegister.findOneAndUpdate(
           { generatedId: referId },
-          { $inc: { nfucRefer: incrementValue } },
-          { new: true }
+          { $inc: { usdtRefer: incrementValue } },
+          { new: true, session }
         );
       }
 
-      return res.json({ updatedUser });
+      await session.commitTransaction();
+      session.endSession();
 
+      return res.json({ updatedUser });
     } else {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ error: 'Insufficient USDT balance' });
     }
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
     console.error('Error updating user data:', error);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 
 app.get('/transhistory/:id', async (req, res) => {
