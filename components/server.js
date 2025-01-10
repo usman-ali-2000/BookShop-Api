@@ -388,7 +388,7 @@ app.get('/calculation', async (req, res) => {
   try {
     const get = await Calculation.find();
 
-    res.status(200).json({ get });
+    res.status(200).json(get);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create Calculation' });
   }
